@@ -73,7 +73,7 @@ public class Calculator : MonoBehaviour {
     {
         double res;
         if (!double.TryParse(s, out res))
-            throw new Exception(string.Format("Calculator: internal error. Could not parse '{0} to double.", s));
+            throw new Exception(string.Format("Calculator: internal error. Could not parse '{0}' to double.", s));
         return res;
     }
 
