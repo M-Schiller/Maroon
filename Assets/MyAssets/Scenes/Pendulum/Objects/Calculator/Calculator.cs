@@ -8,14 +8,16 @@ public class Calculator : MonoBehaviour {
 
     private static int visibleDigits = 15;
 
-    private Dictionary<KeyCode, string> buttonNames = new Dictionary<KeyCode, string>();
-    private double leftNumber;
+    private Dictionary<string, Button> buttons = new Dictionary<string, Button>();
+    private string leftNumber;
     private string rightNumber;
     private string op;
     private bool dot = false;
     private bool error = false;
+    private bool clear = false;
 
-    private Transform display;
+    private Transform mainDisplay;
+    private Transform sideDisplay;
 
     private Dictionary<string, Func<string, bool>> actions = new Dictionary<string, Func<string, bool>>();
 
@@ -24,52 +26,74 @@ public class Calculator : MonoBehaviour {
 
         //numberButtons
         var start = (int)KeyCode.Keypad0;
+        
         for (int i = start; i <= (int)KeyCode.Keypad9; i++)
         {
-            buttonNames[(KeyCode)i] = (i - start).ToString();
-            actions.Add((i - start).ToString(), calcNumber);
+            Button btn = AddButton((i - start).ToString(), (KeyCode)i, calcNumber);
+            btn.keycodes.Add((KeyCode)(i - start + (int)KeyCode.Alpha0));
         }
 
-        buttonNames[KeyCode.KeypadDivide] = "/";
-        buttonNames[KeyCode.KeypadMultiply] = "*";
-        buttonNames[KeyCode.KeypadPlus] = "+";
-        buttonNames[KeyCode.KeypadMinus] = "-";
-        actions["/"] =
-        actions["*"] =
-        actions["+"] =
-        actions["-"] =
-            (string x) => {
-                reduce();
-                leftNumber = parse(rightNumber);
-                rightNumber = "";
-                op = x;
-                return true;
-            };
+        Func<string, bool> act = (string x) => {
+            reduce();
+            leftNumber = rightNumber;
+            if (leftNumber == "" || leftNumber == null)
+                leftNumber = "0";
+            rightNumber = "";
+            op = x;
+            return true;
+        };
 
-        buttonNames[KeyCode.Comma] = ".";
-        actions["."] = calcNumber;
+        AddButton("/", KeyCode.KeypadDivide, act);
+        AddButton("*", KeyCode.KeypadMultiply, act);
+        AddButton("+", KeyCode.KeypadPlus, act);
+        AddButton("-", KeyCode.KeypadMinus, act);
 
-        buttonNames[KeyCode.Backspace] = "clear";
-        buttonNames[KeyCode.KeypadEnter] = "enter";
-        buttonNames[KeyCode.Return] = "enter";
-        actions["enter"] = ((string x) => { reduce(); return true; });
-        actions["clear"] = ((string x) => { error = false; leftNumber = 0; rightNumber = ""; return true; });
+        var btnPeriod = AddButton(".", KeyCode.KeypadPeriod, calcNumber);
+        btnPeriod.keycodes.Add(KeyCode.Period);
+        btnPeriod.keycodes.Add(KeyCode.Comma);
 
-        buttonNames[KeyCode.S] = "sin";
-        buttonNames[KeyCode.C] = "cos";
-        actions["sin"] = ((string x) => { rightNumber = Math.Sin(parse(rightNumber)).ToString();  return true; });
-        actions["cos"] = ((string x) => { rightNumber = Math.Cos(parse(rightNumber)).ToString(); return true; });
-            
+        var btnEnter = AddButton("enter", KeyCode.KeypadEnter, ((string x) => { reduce(); clear = true; return true; }));
+        btnEnter.keycodes.Add(KeyCode.Return);
+
+        AddButton("clear", KeyCode.Backspace, (string x) => { leftNumber = ""; rightNumber = ""; op = ""; error = clear = dot = false; return true; });
+
+        AddButton("sin", KeyCode.S, (string x) => { rightNumber = Math.Sin(toDouble(rightNumber)).ToString(); return true; });
+        AddButton("cos", KeyCode.C, (string x) => { rightNumber = Math.Cos(toDouble(rightNumber)).ToString(); return true; });
+
 
         foreach (Transform child in GetComponentInChildren<Transform>())
-            if (child.name.ToLower() == "display")
-                display = child;
+            if (child.name.ToLower() == "maindisplay")
+                mainDisplay = child;
+            else if (child.name.ToLower() == "sidedisplay")
+                sideDisplay = child;
         
-        if (display == null)
+        if (mainDisplay == null)
             throw new Exception("Calculator: Internal Error. Could not find an object named 'Display'");
 	}
 
-    private double parse(string s)
+    void Update()
+    {
+
+        Button buttonPressed;
+        if (!(getButtonFromKeyboard(out buttonPressed)
+            || getButtonfromMouse(out buttonPressed)))
+            return;
+
+        if(clear)
+        {
+            clear = false;
+            buttons["clear"].action.Invoke("clear");
+        }
+
+        Debug.Log(String.Format("Button '{0}' pressed, method name '{1}'", buttonPressed.name, buttonPressed.action.Method.Name));
+        buttonPressed.action.Invoke(buttonPressed.name);
+
+        displayNumber();
+    }
+
+
+
+    protected double toDouble(string s)
     {
         double res;
         if (!double.TryParse(s, out res))
@@ -77,7 +101,7 @@ public class Calculator : MonoBehaviour {
         return res;
     }
 
-    private void reduce()
+    protected void reduce()
     {
         switch (op)
         {
@@ -85,24 +109,24 @@ public class Calculator : MonoBehaviour {
                 if (rightNumber == "0" || rightNumber == "")
                 {
                     rightNumber = "";
-                    leftNumber = 0;
+                    leftNumber = "";
                     error = true;
                     op = "";
                 }
                 else
-                    rightNumber = (leftNumber / parse(rightNumber)).ToString();
+                    rightNumber = (toDouble(leftNumber) / toDouble(rightNumber)).ToString();
                 break;
 
             case "+":
-                rightNumber = (leftNumber + parse(rightNumber)).ToString();
+                rightNumber = (toDouble(leftNumber) + toDouble(rightNumber)).ToString();
                 break;
 
             case "-":
-                rightNumber = (leftNumber - parse(rightNumber)).ToString();
+                rightNumber = (toDouble(leftNumber) - toDouble(rightNumber)).ToString();
                 break;
 
             case "*":
-                rightNumber = (leftNumber * parse(rightNumber)).ToString();
+                rightNumber = (toDouble(leftNumber) * toDouble(rightNumber)).ToString();
                 break;                
         }
 
@@ -111,7 +135,7 @@ public class Calculator : MonoBehaviour {
 
     }
 
-    private bool calcNumber(string x)
+    protected bool calcNumber(string x)
     {
         if (x == "." || x == ",")
         {
@@ -123,49 +147,41 @@ public class Calculator : MonoBehaviour {
             rightNumber += ".";
             return true;
         }
-
-        Debug.Log(rightNumber);
+        
         rightNumber += x;
-        Debug.Log(rightNumber);
         return true;
     }
 
-    private void displayNumber()
+    protected void displayNumber()
     {
         if (error)
-            display.GetComponent<TextMesh>().text = "Error: div/0";
-        else
+        {
+            mainDisplay.GetComponent<TextMesh>().text = "Error: div/0";
+            sideDisplay.GetComponent<TextMesh>().text = "";
+        } else
         {
             if (rightNumber == "")
-                display.GetComponent<TextMesh>().text = "0.";
+                mainDisplay.GetComponent<TextMesh>().text = "0.";
             else if (rightNumber.Contains("."))
             {
-                display.GetComponent<TextMesh>().text = rightNumber.Substring(0, visibleDigits);
+                mainDisplay.GetComponent<TextMesh>().text = rightNumber.Substring(0, Math.Min(visibleDigits,rightNumber.Length));
             } else
             {
-                display.GetComponent<TextMesh>().text = rightNumber.Substring(Math.Max(0, rightNumber.Length - visibleDigits), Math.Min(rightNumber.Length, 15)) + ".";
+                mainDisplay.GetComponent<TextMesh>().text = rightNumber.Substring(Math.Max(0, rightNumber.Length - visibleDigits), Math.Min(rightNumber.Length, 15)) + ".";
             }
+
+            if (op != "")
+                sideDisplay.GetComponent<TextMesh>().text = leftNumber + " " + op;
+            else
+                sideDisplay.GetComponent<TextMesh>().text = "";
         }
     }
 
     // Update is called once per frame
-    void Update()
+ 
+    protected bool getButtonfromMouse(out Button btn)
     {
-
-        string buttonPressed;
-        if (!( getButtonNamefromMouse(out buttonPressed)
-            || getKeyboardButton(out buttonPressed)))
-            return;
-
-        actions[buttonPressed].Invoke(buttonPressed);
-
-        displayNumber();
-        }
-
-
-    private bool getButtonNamefromMouse(out string name)
-    {
-        name = "";
+        btn = null;
         if (!Input.GetMouseButtonDown(0))
             return false;
 
@@ -174,9 +190,9 @@ public class Calculator : MonoBehaviour {
         
         if (Physics.Raycast(ray, out hit, 100))
         {
-            if (buttonNames.ContainsValue(hit.transform.name))
+            if (buttons.ContainsKey(hit.transform.name))
             {
-                name = hit.transform.name;
+                btn = buttons[hit.transform.name];
                 return true;
             }   
         }
@@ -184,17 +200,37 @@ public class Calculator : MonoBehaviour {
         return false;
     }
 
-    private bool getKeyboardButton(out string name)
+    protected bool getButtonFromKeyboard(out Button btn)
     {
-        name = "";
-        foreach(KeyValuePair<KeyCode, string> button in buttonNames)
+        btn = null;
+        foreach(Button button in buttons.Values)
         {
-            if (Input.GetKeyDown(button.Key))
-            {
-                name = button.Value;
-                return true;
-            }                
+            foreach(KeyCode code in button.keycodes)
+                if (Input.GetKeyDown(code))
+                { 
+                    btn = button;
+                    return true;
+                }                
         }
         return false;
+    }
+
+    private Button AddButton(string name, KeyCode code, Func<string, bool> action)
+    {
+        Button btn = new Button();
+        btn.name = name;
+        btn.keycodes.Add(code);
+        btn.action = action;
+        buttons.Add(name, btn);
+        return btn;
+    }
+
+    protected class Button
+    {
+        public string name;
+        public List<KeyCode> keycodes = new List<KeyCode>();
+        public Func<string, bool> action;
+
+
     }
 }
