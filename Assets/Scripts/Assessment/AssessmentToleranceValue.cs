@@ -14,10 +14,11 @@ public class AssessmentToleranceValue : IAssessmentValue {
 
     private PropertyInfo propInfo;
     private Component component;
-    
 
-	// Use this for initialization
-	void Start () {
+    //frequenzformel f = 1 / (2pi) * wurzel(g/l)
+    // g = gravity, l = length of rope
+    // Use this for initialization
+    void Start () {
 
         if((component = GetComponent(ComponentName)) == null)
         {
