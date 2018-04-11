@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-public class AssessmentWatchValue : MonoBehaviour {
+public class AssessmentWatchValue : IAssessmentValue {
 
     [Header("Attributes")]
     public string Attributes;
@@ -38,12 +38,13 @@ public class AssessmentWatchValue : MonoBehaviour {
                 prop.ParentLine.Add(ppi);
             }
 
-            if(! prop.IsOK()) 
+            if(! prop.IsOK) 
                 throw new Exception(String.Format("At least one property needs to be specified for {0}, line: {1}", prop.RootComponent.name, line));
             else
                 properties.Add(prop);
         }
 
+        AssessmentManager.Instance.RegisterValue(this);
     }
 	
     private ParentProp GetMember(string name, Type ParentType)
@@ -79,7 +80,11 @@ public class AssessmentWatchValue : MonoBehaviour {
 
         foreach(Property prop in properties)
         {
-            Debug.Log(String.Format("{0}: {1}", prop.FullName, prop.GetValue()));
+            prop.Update();
+            Debug.Log(String.Format("{0}, dirty {1}", prop.FullName, prop.IsDirty));
+
+            if(prop.IsDirty)
+                Debug.Log(String.Format("{0}: {1}", prop.FullName, prop.GetValue));
         }
 		
 	}
@@ -89,6 +94,10 @@ public class AssessmentWatchValue : MonoBehaviour {
         public string FullName;
         public Component RootComponent;
         public List<ParentProp> ParentLine;
+        private object lastVal;
+        private object currentVal;
+        private bool dirty;
+
 
         public Property(string name)
         {
@@ -102,20 +111,12 @@ public class AssessmentWatchValue : MonoBehaviour {
             ParentLine = new List<ParentProp>(other.ParentLine);
         }
 
-        public object GetValue()
-        {
-            if (! IsOK())
-                return null;
-            else
-                return GetValue(ParentLine.Count - 1);
-        }
-
-        private object GetValue(int i)
+        private object intGetValue(int i)
         {
             if (i == 0)
                 return ParentLine[0].GetValue(RootComponent, null);
             else
-                return ParentLine[i].GetValue(GetValue(i - 1), null);
+                return ParentLine[i].GetValue(intGetValue(i - 1), null);
         }
         
         public new Type GetType()
@@ -128,9 +129,35 @@ public class AssessmentWatchValue : MonoBehaviour {
                 return null;
         }
 
-        public bool IsOK()
+        public bool IsOK {
+            get {
+                return (ParentLine.Count > 0);
+            }
+        }
+       
+
+        public bool IsDirty {
+            get {
+                return dirty;
+            }
+        }
+
+        public object GetValue {
+            get {
+                return currentVal;
+            }
+        }
+
+        public void Update()
         {
-            return (ParentLine.Count > 0);
+            Debug.Log("Updating " + FullName);
+            if (!IsOK)
+                currentVal = null;
+            else
+                currentVal = intGetValue(ParentLine.Count - 1);
+
+            dirty = (lastVal != currentVal);
+            lastVal = currentVal;
         }
     }
 
