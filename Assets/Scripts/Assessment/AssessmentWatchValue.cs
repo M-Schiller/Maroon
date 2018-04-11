@@ -51,7 +51,7 @@ public class AssessmentWatchValue : MonoBehaviour {
         ParentProp ret = null;
         foreach (PropertyInfo pi in ParentType.GetProperties())
         {
-            Debug.Log(String.Format("{0}, {1}", name, pi.Name.ToLower()));
+            //Debug.Log(String.Format("{0}, {1}", name, pi.Name.ToLower()));
             if (pi.Name.ToLower() == name.ToLower())
             {
                 ret = new ParentProp(pi);
@@ -63,7 +63,7 @@ public class AssessmentWatchValue : MonoBehaviour {
         if ( ret == null)
             foreach (FieldInfo fi in ParentType.GetFields())
             {
-                Debug.Log(String.Format("{0}, {1}", name, fi.Name.ToLower()));
+                //Debug.Log(String.Format("{0}, {1}", name, fi.Name.ToLower()));
                 if (fi.Name.ToLower() == name.ToLower())
                 {
                     ret = new ParentProp(fi);
@@ -115,13 +115,13 @@ public class AssessmentWatchValue : MonoBehaviour {
             if (i == 0)
                 return ParentLine[0].GetValue(RootComponent, null);
             else
-                return ParentLine[i].GetValue(ParentLine[i - 1], null);
+                return ParentLine[i].GetValue(GetValue(i - 1), null);
         }
         
         public new Type GetType()
         {
             if (ParentLine.Count > 0)
-                return ParentLine[ParentLine.Count - 1].GetType();
+                return ParentLine[ParentLine.Count - 1].PropertyType;
             else if (RootComponent)
                 return RootComponent.GetType();
             else
@@ -138,15 +138,21 @@ public class AssessmentWatchValue : MonoBehaviour {
     {
         private MemberInfo info;
         private Type type;
+        public Type PropertyType {
+            get {
+                return (type == typeof(PropertyInfo)) ? ((PropertyInfo)info).PropertyType : ((FieldInfo)info).FieldType;
+            }
+        }
+
         public ParentProp(PropertyInfo pi)
         {
             info = (MemberInfo)pi;
-            type = pi.PropertyType;
+            type = typeof(PropertyInfo);
         }
         public ParentProp(FieldInfo fi)
         {
             info = (MemberInfo)fi;
-            type = fi.FieldType;
+            type = typeof(FieldInfo);
         }
 
         public new Type GetType()
@@ -157,8 +163,8 @@ public class AssessmentWatchValue : MonoBehaviour {
 
         public object GetValue(object obj, object[] index)
         {
-                   
-            if (type == Type.GetType("PropertyInfo"))
+            Debug.Log(String.Format("getValue: {0}, {1}", obj, type));
+            if (type == typeof(PropertyInfo))
                 return ((PropertyInfo)info).GetValue(obj, index);
             else
                 return ((FieldInfo)info).GetValue(obj);
