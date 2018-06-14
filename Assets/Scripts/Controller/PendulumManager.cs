@@ -10,6 +10,8 @@
 //-----------------------------------------------------------------------------
 //
 
+using Evaluation.UnityInterface;
+using Evaluation.UnityInterface.Events;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -62,6 +64,13 @@ public class PendulumManager : MonoBehaviour
         {
             mouseDown = false;
             joint.useLimits = false;
+
+            Debug.Log("Sending Release action");
+            AssessmentManager.Instance.UpdateEnvironment();
+            IterationResult res =  AssessmentManager.Instance.Send(new UseObject("operation", "release"));
+            Debug.Log("Got results: " + res.ImmediateFeedackStrings.Length);
+            Debug.Log(String.Join(", ", res.ImmediateFeedackStrings));
+            AssessmentManager.Instance.PrintSummary();
         }
          else if (Input.GetMouseButtonDown(0) || mouseDown)
         {

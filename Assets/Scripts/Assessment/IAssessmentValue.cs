@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using Evaluation.UnityInterface.Events;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 
 
-public class IAssessmentValue : MonoBehaviour
+public abstract class IAssessmentValue : MonoBehaviour
 {
-    
+    public bool ContinousUpdate = false;
+    public abstract EnvironmentalChange GetEvalEvent();
 }

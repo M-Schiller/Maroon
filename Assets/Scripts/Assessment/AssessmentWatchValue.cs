@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Evaluation.UnityInterface;
+using Evaluation.UnityInterface.Events;
 
 public class AssessmentWatchValue : IAssessmentValue {
 
-    [Header("Attributes")]
+    //public bool ContinousUpdate = false;
+    [TextArea]
     public string Attributes;
 
     private List<Property> properties = new List<Property>();
@@ -29,7 +32,7 @@ public class AssessmentWatchValue : IAssessmentValue {
             parts = parts.Skip(1).ToArray();
             foreach (string part in parts)
             {
-                Debug.Log("Type " + prop.GetType());
+               // Debug.Log("Type " + prop.GetType());
                 var ppi = GetMember(part, prop.GetType());
 
                 if (ppi == null)
@@ -78,16 +81,25 @@ public class AssessmentWatchValue : IAssessmentValue {
 	// Update is called once per frame
 	void Update () {
 
-        foreach(Property prop in properties)
+        if (!ContinousUpdate)
+            foreach (Property prop in properties)
+                prop.Update();
+        else 
+            AssessmentManager.Instance.Send(GetEvalEvent());
+    }
+
+    public override EnvironmentalChange GetEvalEvent()
+    {
+        EnvironmentalChange ev = new EnvironmentalChange(this.gameObject.name);
+
+        foreach (Property prop in properties)
         {
             prop.Update();
-            Debug.Log(String.Format("{0}, dirty {1}", prop.FullName, prop.IsDirty));
-
-            if(prop.IsDirty)
-                Debug.Log(String.Format("{0}: {1}", prop.FullName, prop.GetValue));
+            ev.AddProperty(prop.FullName, prop.GetValue);
         }
-		
-	}
+
+        return ev;
+    }
 
     public class Property
     {
@@ -150,7 +162,7 @@ public class AssessmentWatchValue : IAssessmentValue {
 
         public void Update()
         {
-            Debug.Log("Updating " + FullName);
+            //Debug.Log("Updating " + FullName);
             if (!IsOK)
                 currentVal = null;
             else
@@ -190,7 +202,7 @@ public class AssessmentWatchValue : IAssessmentValue {
 
         public object GetValue(object obj, object[] index)
         {
-            Debug.Log(String.Format("getValue: {0}, {1}", obj, type));
+            //Debug.Log(String.Format("getValue: {0}, {1}", obj, type));
             if (type == typeof(PropertyInfo))
                 return ((PropertyInfo)info).GetValue(obj, index);
             else
