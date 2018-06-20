@@ -5008,6 +5008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edc20d906949fcb48bb28e721aad6e08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ContinousUpdate: 0
   Attributes: 'HingeJoint.Transform.Rotation.X
 
     PendulumManager.RopeLength
