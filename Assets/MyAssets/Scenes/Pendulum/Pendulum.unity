@@ -5009,7 +5009,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ContinousUpdate: 0
-  Attributes: 'HingeJoint.Transform.Rotation.X
+  Attributes: 'HingeJoint.Limits.Max
 
     PendulumManager.RopeLength
 

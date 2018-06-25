@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Evaluation.UnityInterface.Events;
 
 public class StopWatch : MonoBehaviour {
 
@@ -17,7 +18,6 @@ public class StopWatch : MonoBehaviour {
     void Start () {
         running = false;
         SWReset();
-                
 	}
 
     // Update is called once per frame
@@ -42,12 +42,18 @@ public class StopWatch : MonoBehaviour {
 
     public void SWStart()
     {
+        AssessmentManager.Instance.UpdateEnvironment();
+        var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-start"));
+        Debug.Log("Answer: " + String.Join(", ", res.ImmediateFeedackStrings));
         running = true;
         startTime = Time.time;
     }
 
     public void SWStop()
     {
+        AssessmentManager.Instance.UpdateEnvironment();
+        var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-stop"));
+        Debug.Log("Answer: " + String.Join(", ", res.ImmediateFeedackStrings));
         running = false;
     }
     

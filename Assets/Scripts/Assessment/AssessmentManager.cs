@@ -28,7 +28,7 @@ public class AssessmentManager : MonoBehaviour {
         Debug.Log("Connecting to WebService");
         evalService_ = new EvaluationService("http://localhost:51166/EvaluationService.asmx", "pendulum_maroon");
         Debug.Log("Got ID: " + evalService_.ContextID);
-        IterationResult result = Send(new EnterSection("experiment-workplace"));
+        IterationResult result = Send(new EnterSection("pendulum-workplace"));
         Debug.Log("Immediate Feedback count: " + result.ImmediateFeedackStrings.Length);
         foreach(String fb in result.ImmediateFeedackStrings )
         {
@@ -41,7 +41,10 @@ public class AssessmentManager : MonoBehaviour {
     {
         foreach (IAssessmentValue val in values_)
             if (!val.ContinousUpdate)
+            {
+                Debug.Log("Sending " + val.name);
                 Send(val.GetEvalEvent());
+            }
     }
 
     public IterationResult Send(IEvalEvent Event)

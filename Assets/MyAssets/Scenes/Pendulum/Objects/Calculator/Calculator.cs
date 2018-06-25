@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Evaluation.UnityInterface.Events;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 
 public class Calculator : MonoBehaviour {
 
@@ -52,7 +52,17 @@ public class Calculator : MonoBehaviour {
         btnPeriod.keycodes.Add(KeyCode.Period);
         btnPeriod.keycodes.Add(KeyCode.Comma);
 
-        var btnEnter = AddButton("enter", KeyCode.KeypadEnter, ((string x) => { reduce(); clear = true; return true; }));
+        var btnEnter = AddButton("enter", KeyCode.KeypadEnter, ((string x) => {
+            reduce();
+            EnvironmentalChange ec = new EnvironmentalChange(this.name);
+            ec.AddProperty("calculated_frequency", toDouble(rightNumber));
+            AssessmentManager.Instance.Send(ec);
+            var res = AssessmentManager.Instance.Send(new UseObject("operation", "submit-frequency"));
+            Debug.Log("Final Answer of Server: " + String.Join(", ", res.ImmediateFeedackStrings));
+
+            clear = true;
+            return true;
+        }));
         btnEnter.keycodes.Add(KeyCode.Return);
 
         AddButton("clear", KeyCode.Backspace, (string x) => { leftNumber = ""; rightNumber = ""; op = ""; error = clear = dot = false; return true; });

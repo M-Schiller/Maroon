@@ -47,6 +47,8 @@ public class AssessmentWatchValue : IAssessmentValue {
                 properties.Add(prop);
         }
 
+
+
         AssessmentManager.Instance.RegisterValue(this);
     }
 	

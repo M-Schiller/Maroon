@@ -52,6 +52,9 @@ public class PendulumManager : MonoBehaviour
     {
 
         defaultPosition = transform.position;
+
+        //This is for initialy setting the ropelength in assessment 
+        setRopeLengthRelative(0);
         
     }
 
@@ -62,15 +65,16 @@ public class PendulumManager : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
         {
+            Debug.Log("Sending Release action");
+            AssessmentManager.Instance.UpdateEnvironment();
+            IterationResult res = AssessmentManager.Instance.Send(new UseObject("operation", "release"));
+            Debug.Log("Got results: " + res.ImmediateFeedackStrings.Length);
+            Debug.Log(String.Join(", ", res.ImmediateFeedackStrings));
+
             mouseDown = false;
             joint.useLimits = false;
 
-            Debug.Log("Sending Release action");
-            AssessmentManager.Instance.UpdateEnvironment();
-            IterationResult res =  AssessmentManager.Instance.Send(new UseObject("operation", "release"));
-            Debug.Log("Got results: " + res.ImmediateFeedackStrings.Length);
-            Debug.Log(String.Join(", ", res.ImmediateFeedackStrings));
-            AssessmentManager.Instance.PrintSummary();
+            //AssessmentManager.Instance.PrintSummary();
         }
          else if (Input.GetMouseButtonDown(0) || mouseDown)
         {
@@ -201,7 +205,7 @@ public class PendulumManager : MonoBehaviour
         DrawLine(startPos, StandRopeJoint.transform.position, new Color(0, 0, 0));
     }
 
-     void setRopeLengthRelative(float value)
+    void setRopeLengthRelative(float value)
     {
         limitHinge(PendulumWeight.GetComponent<HingeJoint>(), 0);
         Vector3 currPos = PendulumWeight.transform.position;
@@ -212,8 +216,14 @@ public class PendulumManager : MonoBehaviour
         ropeLength = -newVal;
 
         pos.Set(transform.position.x, transform.position.y - ropeLength, transform.position.z);
-        
+
         obj.transform.position = pos;
+
+        // f = 1/(2pi) * wurzel(g/l)
+        EnvironmentalChange ec = new EnvironmentalChange(this.name);
+        Debug.Log("updating theoretical frequency");
+        ec.AddProperty("theoretical_frequency", 1 / (2 * Math.PI) * Math.Sqrt(9.81 / ropeLength));
+        AssessmentManager.Instance.Send(ec);
     }
 
 
