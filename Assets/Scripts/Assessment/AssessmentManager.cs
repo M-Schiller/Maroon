@@ -13,7 +13,7 @@ public class AssessmentManager : MonoBehaviour {
     private static AssessmentManager instance_;
     private EvaluationService evalService_;
     private List<IAssessmentValue> values_;
-
+    public bool Enabled { get; private set; }
     public static AssessmentManager Instance {
         get {
             return instance_;
@@ -22,23 +22,34 @@ public class AssessmentManager : MonoBehaviour {
   
     public void Start()
     {
+
         values_ = new List<IAssessmentValue>();
         instance_ = this;
-
-        Debug.Log("Connecting to WebService");
-        evalService_ = new EvaluationService("http://localhost:51166/EvaluationService.asmx", "pendulum_maroon");
-        Debug.Log("Got ID: " + evalService_.ContextID);
-        IterationResult result = Send(new EnterSection("pendulum-workplace"));
-        Debug.Log("Immediate Feedback count: " + result.ImmediateFeedackStrings.Length);
-        foreach(String fb in result.ImmediateFeedackStrings )
+        try
         {
-            Debug.Log("Feedback: " + fb);
+            Debug.Log("Connecting to WebService");
+            evalService_ = new EvaluationService("http://localhost:51166/EvaluationService.asmx", "pendulum_maroon");
+            Debug.Log("Got ID: " + evalService_.ContextID);
+            IterationResult result = Send(new EnterSection("pendulum-workplace"));
+            Debug.Log("Immediate Feedback count: " + result.ImmediateFeedackStrings.Length);
+            foreach (String fb in result.ImmediateFeedackStrings)
+            {
+                Debug.Log("Feedback: " + fb);
+            }
+            Enabled = true;
+        } catch(Exception e)
+        {
+            Enabled = false;
+            Debug.Log("WARNING! An error happened while connection to the Assessment service: " + e.Message);
         }
 
     }
 
     public void UpdateEnvironment()
     {
+        if (!Enabled)
+            return; 
+
         foreach (IAssessmentValue val in values_)
             if (!val.ContinousUpdate)
             {
@@ -49,6 +60,9 @@ public class AssessmentManager : MonoBehaviour {
 
     public IterationResult Send(IEvalEvent Event)
     {
+        if (!Enabled)
+            return new IterationResult(null);
+
         return evalService_.Send(Event);
     }
 
@@ -56,6 +70,11 @@ public class AssessmentManager : MonoBehaviour {
     {
         Debug.Log("registering value: " + Value.gameObject.name);
         values_.Add(Value);
+        if(evalService_ == null)
+        {
+            Debug.Log("Warning! Assessmentservice is not active!");
+            return;
+        }
         IterationResult res = evalService_.Send(Value.GetEvalEvent(), true);
         if(res.ImmediateFeedackStrings.Length > 0)
         {
