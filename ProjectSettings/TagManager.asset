@@ -29,6 +29,15 @@ TagManager:
   - Ignore Raycast
   - Water
   - UI
+  - graaf2
+  - pickup
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
   - 
   - 
   - 

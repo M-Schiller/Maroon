@@ -3,73 +3,86 @@ using System.Collections;
 
 public class ThrowObject : MonoBehaviour
 {
-    private GameObject uiBox;
     private ConstantForce cf;
     private GameObject player;
     private GameObject playerCam;
     private float throwForce = 200;
-    bool hasPlayer = false;
+    public  bool hasPlayer = false;
     bool beingCarried = false;
-    public AudioClip[] soundToPlay;
-    private AudioSource audio;
     public int dmg;
     private bool touched = false;
     public bool isBalloon = false;
     private bool firstcarried = false;
-    private bool setUI = false;
     private bool trigger = false;
+    private DialogueManager dMan;
+    public string ID;
+    private bool isPlaced = false;
+    private MeshRenderer render;
+    private Color color;
+
 
     private void Awake()
     {
-        uiBox = GameObject.FindWithTag("UI");
         playerCam  = GameObject.FindWithTag("MainCamera");
         player = GameObject.FindWithTag("Player");
-
+        dMan = FindObjectOfType<DialogueManager>();
+        if (ID != "magnet" && ID != "weight")
+        {
+            render = gameObject.GetComponent<MeshRenderer>();
+            color = render.material.color;
+        }      
     }
 
     void Start()
     {
-        audio = GetComponent<AudioSource>();
         cf = GetComponent<ConstantForce>();
-       // uiBox = GameObject.FindGameObjectWithTag("UI");
+        // uiBox = GameObject.FindGameObjectWithTag("UI");
+        if (isPlaced)
+            this.gameObject.SetActive(false);
     }
 
 
-    void ShowUI()
+  
+    //0 = transparent, 1 = normal
+    void Alpha(int i)
     {
-        if (hasPlayer && !setUI)
+        if (ID != "magnet" && ID != "weight")
         {
-            setUI = true;
-            uiBox.SetActive(true);
+            color.a = i;
+            render.material.color = color;
+            Debug.Log("no trans");
         }
-        else if (!hasPlayer && setUI)
-        {
-            setUI = false;
-            uiBox.SetActive(false);
-        }
-    }
+        if (i == 0)
+            SoundManager.instance.PlaySingle(SoundManager.instance.pickupSound);
+        else
+            SoundManager.instance.PlaySingle(SoundManager.instance.pickdownSound);
 
+    }
 
     void Update()
     {
+       
         if (beingCarried)
-            GamificationManager.instance.holdingItem = true;
+        {
+            GamificationManager.instance.HoldingItem = true;
+                
+        }
         else
-            GamificationManager.instance.holdingItem = false;
-
+        {               
+            GamificationManager.instance.HoldingItem = false;
+        }
         if (hasPlayer)
-            GamificationManager.instance.playerCanPickItem = true;
+            GamificationManager.instance.PlayerCanPickItem = true;
         else
-            GamificationManager.instance.playerCanPickItem = false;
+            GamificationManager.instance.PlayerCanPickItem = false;
 
-        ShowUI();
+    
      
 
 
         if (beingCarried)
         {
             firstcarried = true;
-            Debug.Log("touched");
         }
            
 
@@ -79,23 +92,20 @@ public class ThrowObject : MonoBehaviour
             GetComponent<Rigidbody>().useGravity = false;
             Debug.Log("Flying");
         }
+      
 
-        float dist = Vector3.Distance(gameObject.transform.position, player.transform.position);
-        if (dist <= 2.5f)
-        {
-            hasPlayer = true;
-        }
-        else
-        {
-            hasPlayer = false;
-        }
         if (hasPlayer && !beingCarried && Input.GetMouseButtonDown(0))
         {
+            //Item is picked up
             Debug.Log("Carry");
             GetComponent<Rigidbody>().isKinematic = true;
             transform.parent = playerCam.transform;
             beingCarried = true;
             trigger = true;
+            Alpha(0);
+          
+          
+
         }
         if (hasPlayer && beingCarried && Input.GetMouseButtonUp(0))
         {
@@ -108,34 +118,63 @@ public class ThrowObject : MonoBehaviour
                 GetComponent<Rigidbody>().isKinematic = false;
                 transform.parent = null;
                 beingCarried = false;
+                Alpha(1);
                 touched = false;
+               
             }
             if (Input.GetMouseButtonDown(0) && !trigger)
             {
                 GetComponent<Rigidbody>().isKinematic = false;
                 transform.parent = null;
                 beingCarried = false;
+                Alpha(1);
                 GetComponent<Rigidbody>().AddForce(playerCam.transform.forward * throwForce);
-                RandomAudio();
                 GamificationManager.instance.OneBalloonSpawned = false;
+                PlaceItem();
             }
             else if (Input.GetMouseButtonDown(1) && !trigger)
             {
                 GetComponent<Rigidbody>().isKinematic = false;
                 transform.parent = null;
                 beingCarried = false;
+                Alpha(1);
                 GamificationManager.instance.OneBalloonSpawned = false;
+                PlaceItem();
             }
         }
     }
-    void RandomAudio()
+  
+    //dialogue plays when player places an item correctly
+    void PlayDialogue()
     {
-        if (audio.isPlaying)
+        dMan.ShowBox(ID);
+    }
+
+    //Check if item is placed correctly. ADD NEW EXPERIMENTS HERE
+    void PlaceItem()
+    {
+
+        Collider collider = this.GetComponent<Collider>();
+        BuildVandegraaf2 script = FindObjectOfType<BuildVandegraaf2>();
+        BuildVandegraaf1 script2 = FindObjectOfType<BuildVandegraaf1>();
+        BuildFallingcoil script3 = FindObjectOfType<BuildFallingcoil>();
+        BuildFaradayslaw script4 = FindObjectOfType<BuildFaradayslaw>();
+        BuildPendulum script5 = FindObjectOfType<BuildPendulum>();
+
+
+
+        if (script.IsOverlapping(collider, ID) || script2.IsOverlapping(collider, ID)
+            || script3.IsOverlapping(collider, ID) || script4.IsOverlapping(collider, ID)
+            || script5.IsOverlapping(collider, ID))
         {
-            return;
+            isPlaced = true;
+            SoundManager.instance.PlaySingle(GamificationManager.instance.AchievementSound);
+            this.gameObject.SetActive(false);
+            GamificationManager.instance.namesOfDestroyedPickups.Add(this.gameObject.name);
+            Invoke("PlayDialogue", 0.1F); //Play dialogue after a little while
         }
-        audio.clip = soundToPlay[Random.Range(0, soundToPlay.Length)];
-        audio.Play();
+
+
 
     }
 
@@ -143,6 +182,7 @@ public class ThrowObject : MonoBehaviour
     //If object collides with other object player looses it
     void OnTriggerEnter(Collider other)
     {
+
         if (beingCarried && other.CompareTag("Wall"))
         {
             GamificationManager.instance.OneBalloonSpawned = false; //enabbles to pick up next balloon

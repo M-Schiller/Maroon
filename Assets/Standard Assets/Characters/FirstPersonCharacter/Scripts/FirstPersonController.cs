@@ -55,15 +55,54 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_Jumping = false;
             m_AudioSource = GetComponent<AudioSource>();
             m_MouseLook.Init(transform, m_Camera.transform);
-            this.transform.position = new Vector3(GamificationManager.instance.player_position_x, GamificationManager.instance.player_position_y,
-                GamificationManager.instance.player_position_z);
+            this.transform.position = GamificationManager.instance.Player_position;
+            //This functions is called every time laboratory is loaded new. Its here to place the pickups
+            GamificationManager.instance.Resume();
 
         }
 
+       public void SetClosestpickup()
+        {
+            Debug.Log("Closest Set");
+            Transform bestTarget = null;
+            float closestDistanceSqr = Mathf.Infinity;
+            Vector3 currentPosition = transform.position;
+            foreach (GameObject potentialTarget in GamificationManager.instance.pickups)
+            {
+                Vector3 directionToTarget = potentialTarget.transform.position - currentPosition;
+                float dSqrToTarget = directionToTarget.sqrMagnitude;
+                if (dSqrToTarget < closestDistanceSqr)
+                {
+                    closestDistanceSqr = dSqrToTarget;
+                    bestTarget = potentialTarget.transform;
+                }
+            }
+
+            float dist = Vector3.Distance(bestTarget.position, transform.position);
+            if (dist <= 2.5f)
+            {
+                Debug.Log("Best in Range");
+                foreach (GameObject potentialTarget in GamificationManager.instance.pickups)
+                {
+                    //Closest target is in range
+                    potentialTarget.GetComponent<ThrowObject>().hasPlayer = false;
+                   
+                }
+                bestTarget.gameObject.GetComponent<ThrowObject>().hasPlayer = true;
+                UIManager.instance.ShowUI();
+            }
+            else
+            {
+                bestTarget.gameObject.GetComponent<ThrowObject>().hasPlayer = false;
+                UIManager.instance.HideUI();
+            }
+        }
 
         // Update is called once per frame
         private void Update()
         {
+            SetClosestpickup();
+            GamificationManager.instance.PlayerIsMoving = m_IsWalking;
             RotateView();
             // the jump state needs to read here to make sure it is not missed
             if (!m_Jump)
@@ -99,10 +138,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private void FixedUpdate()
         {
 
-
-            GamificationManager.instance.player_position_x = transform.position.x;
-            GamificationManager.instance.player_position_y = transform.position.y;
-            GamificationManager.instance.player_position_z = transform.position.z;
+            GamificationManager.instance.Player_position = transform.position;        
             float speed;
             GetInput(out speed);
             // always move along the camera forward as it is the direction that it being aimed at

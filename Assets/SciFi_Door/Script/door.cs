@@ -4,67 +4,75 @@ using System.Collections;
 public class door : MonoBehaviour {
 	GameObject thedoor;
     private DialogueManager dMan;
-    public GameObject uiBox;
-    private bool setUI = false;
     private bool hasPlayer = false;
     private bool doorOpen = false;
 
     private void Start()
     {
         dMan = FindObjectOfType<DialogueManager>();
+        thedoor = GameObject.FindWithTag("SF_Door");
+        if (GamificationManager.instance.DoorIsOpen)
+            thedoor.transform.position = new Vector3(thedoor.transform.position.x, thedoor.transform.position.y + 4, thedoor.transform.position.z);
+       
     }
 
     void OnTriggerEnter ( Collider other  )
     {
 
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && !GamificationManager.instance.DoorIsOpen)
         {
             hasPlayer = true;
-            if (!GamificationManager.instance.doorDialogue)
+            if (!GamificationManager.instance.DoorDialogue && GamificationManager.instance.SpokenWithLaunch)
             {
                 dMan.ShowBox("DoorOpen");
-                GamificationManager.instance.doorDialogue = true;
+                GamificationManager.instance.DoorDialogue = true;               
             }
-            if (!setUI)
-            {
-                setUI = true;
-                uiBox.SetActive(true);
-            }
+           
         }
       
        
 }
 
-   
-
-    private void Update()
+    private void OnTriggerStay(Collider other)
     {
-        if (!GamificationManager.instance.holdingItem && hasPlayer &&  !GamificationManager.instance.playerCanPickItem && !doorOpen && Input.GetMouseButtonDown(0))
+        if (other.CompareTag("Player") && !GamificationManager.instance.DoorIsOpen && GamificationManager.instance.SpokenWithLaunch)
         {
-            thedoor = GameObject.FindWithTag("SF_Door");
-            thedoor.GetComponent<Animation>().Play("open");
-            doorOpen = true;
-            Debug.Log("open");
-        }
-
-        else if (!GamificationManager.instance.holdingItem &&  !GamificationManager.instance.playerCanPickItem &&hasPlayer && doorOpen && Input.GetMouseButtonDown(0))
-        {
-            thedoor = GameObject.FindWithTag("SF_Door");
-            thedoor.GetComponent<Animation>().Play("close");
-            doorOpen = false;
-            Debug.Log("close");
+            UIManager.instance.ShowUICollided();
         }
     }
 
-    void OnTriggerExit ( Collider other  ){
-        if (other.CompareTag("Player"))
+
+    private void Update()
+    {
+        if (GamificationManager.instance.SpokenWithLaunch && !GamificationManager.instance.DoorIsOpen)
+        {
+            if (!GamificationManager.instance.HoldingItem && hasPlayer && !GamificationManager.instance.PlayerCanPickItem && !doorOpen && Input.GetMouseButtonDown(0))
+            {              
+                thedoor = GameObject.FindWithTag("SF_Door");
+                thedoor.GetComponent<Animation>().Play("open");
+                doorOpen = true;
+                Debug.Log("open");
+                GamificationManager.instance.DoorIsOpen = true;
+                UIManager.instance.HideUICollided();
+            }
+
+            /* else if (!GamificationManager.instance.holdingItem && !GamificationManager.instance.playerCanPickItem && hasPlayer && doorOpen && Input.GetMouseButtonDown(0))
+             {
+                 thedoor = GameObject.FindWithTag("SF_Door");
+                 thedoor.GetComponent<Animation>().Play("close");
+                 doorOpen = false;
+                 Debug.Log("close");
+             }*/
+        }
+       
+    }
+
+    void OnTriggerExit ( Collider other)
+    {
+        if (other.CompareTag("Player") && !GamificationManager.instance.DoorIsOpen)
         {
             hasPlayer = false;
-            if (setUI)
-            {
-                setUI = false;
-                uiBox.SetActive(false);
-            }
+            UIManager.instance.HideUICollided();
         }
 }
 }
