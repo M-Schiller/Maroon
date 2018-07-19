@@ -983,6 +983,34 @@ CanvasRenderer:
 Transform:
   m_PrefabParentObject: {fileID: 400002, guid: 942d02a5c8da81a48b319377bc6bb20f, type: 3}
   m_PrefabInternal: {fileID: 649455505}
+--- !u!1 &200791285
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 200791286}
+  m_Layer: 0
+  m_Name: RandomThing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &200791286
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 200791285}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 46.737, y: -10.994, z: -34.906}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 12
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &201206867
 GameObject:
   m_ObjectHideFlags: 0
@@ -1281,12 +1309,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuSound: {fileID: 0}
-  AchievementSound: {fileID: 0}
+  AchievementSound: {fileID: 8300000, guid: b6da7f9775b5ffb47aab0e911f80ab2d, type: 3}
   pickups: []
   namesOfDestroyedPickups: []
   levelName: 
-  parent: {fileID: 0}
-  achievementPrefab: {fileID: 0}
+  parent: {fileID: 200791285}
+  achievementPrefab: {fileID: 200791285}
   vandegraaf1Complete: 0
   vandegraaf2Complete: 0
   pendulumComplete: 0
@@ -6747,7 +6775,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ContinousUpdate: 0
-  Attributes: 'HingeJoint.Limits.Max
+  Attributes: 'Transform.Rotation.X
 
     PendulumManager.RopeLength
 
