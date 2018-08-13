@@ -22,10 +22,17 @@ using UnityEngine.UI;
 /// </summary>
 public class PendulumManager : MonoBehaviour
 {
-    public GameObject PendulumWeight;
-    public GameObject StandRopeJoint;
-    public GameObject StopWatch;
-    public GameObject InfoTextPanel;
+    [SerializeField]
+    private GameObject PendulumWeight;
+    [SerializeField]
+    private GameObject StandRopeJoint;
+    [SerializeField]
+    private GameObject StopWatch;
+    [SerializeField]
+    private GameObject InfoTextPanel;
+    
+    public float ropeLength = 0.3f;
+    public float weight = 1.0f;
 
     private  bool mouseDown;
     private Vector3 mouseStart;
@@ -33,8 +40,6 @@ public class PendulumManager : MonoBehaviour
     private Boolean slow = false;
     private Vector3 defaultPosition;
 
-    public float ropeLength = 0.3f;
-    public float weight = 1.0f;
 
     private float weightChangeStepSize = 0.05f;
     private float weightMin = 1.0f;
