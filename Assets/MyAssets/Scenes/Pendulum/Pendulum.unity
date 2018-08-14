@@ -521,6 +521,7 @@ GameObject:
   - component: {fileID: 54010181}
   - component: {fileID: 54010183}
   - component: {fileID: 54010182}
+  - component: {fileID: 54010184}
   m_Layer: 0
   m_Name: Experiment
   m_TagString: Untagged
@@ -570,6 +571,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text_info: {fileID: 623071583}
   TimeTextIsVisible: 2
+--- !u!114 &54010184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 54010180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73e182aee1fb0a7419353a013111efd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menuSound: {fileID: 0}
+  AchievementSound: {fileID: 8300000, guid: b6da7f9775b5ffb47aab0e911f80ab2d, type: 3}
+  pickups: []
+  namesOfDestroyedPickups: []
+  levelName: pendulum_assignment
+  parent: {fileID: 54010180}
+  achievementPrefab: {fileID: 1213855080171162, guid: d38ca11d152e27943b6b3c5272c32262,
+    type: 2}
+  vandegraaf1Complete: 0
+  vandegraaf2Complete: 0
+  pendulumComplete: 0
+  faradayslawComplete: 0
+  fallingcoilComplete: 0
 --- !u!1 &76193968
 GameObject:
   m_ObjectHideFlags: 0
@@ -3036,7 +3061,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 49294877}
   m_HandleRect: {fileID: 49294876}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 0.9999998
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -6867,7 +6892,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0012292401, y: 0.00027191947}
+  m_AnchoredPosition: {x: 0.00026202304, y: 0.00027191947}
   m_SizeDelta: {x: -0.00048828125, y: 400}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1854099317
