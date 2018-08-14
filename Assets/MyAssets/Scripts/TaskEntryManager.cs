@@ -28,9 +28,7 @@ public class TaskEntryManager : MonoBehaviour {
         Content = Canvas.Find("Scroll View").Find("Viewport").Find("Content") as RectTransform;
         Panel = Content.Find("Panel") as RectTransform;
 
-        updateHeight();
-        updateHeight();
-        
+        updateHeight();        
     }
 	
 	// Update is called once per frame
@@ -41,29 +39,33 @@ public class TaskEntryManager : MonoBehaviour {
 
     private void updateHeight()
     {
-
         //init the contentHeight or set at least 
         float contentHeight = 0;
 
         var vlg = Panel.GetComponent<VerticalLayoutGroup>();
-        vlg.childControlHeight = false;
-        vlg.childControlWidth = false;
-        vlg.childForceExpandHeight = false;
-        vlg.childForceExpandWidth = false;
+        Panel.GetComponent<ContentSizeFitter>().enabled = false;
 
+        var check = new List<object> ();
         foreach (Text text in GetComponentsInChildren<Text>())
         {
-            text.rectTransform.rect.Set(0, 0, Canvas.rect.width, Canvas.rect.height);
-            contentHeight += text.preferredHeight + 5 ; // add some for the border of the Input field
+            if (!check.Contains(text))
+                if (text.rectTransform.parent.name.StartsWith("InputField"))
+                {
+                    var inp = text.rectTransform.parent.GetComponent<InputField>();
+                    if (!check.Contains(inp))
+                    {
+                        contentHeight += (inp.transform as RectTransform).sizeDelta.y; // add some for the border of the Input field
+                        check.Add(inp);
+                    }
+                } else
+                {
+                    check.Add(text);
+                    contentHeight += text.preferredHeight + 5; // add some for the border of the Input field
+                    text.rectTransform.sizeDelta = new Vector2(text.rectTransform.rect.width, text.preferredHeight + 5);
+                }
         }
 
-
-        vlg.childControlHeight = true;
-        vlg.childControlWidth = true;
-        vlg.childForceExpandHeight = true;
-        vlg.childForceExpandWidth = true;
-
-        contentHeight = (contentHeight > 0) ? contentHeight : Canvas.rect.height;
+        contentHeight += Panel.childCount * vlg.padding.top;//these are the paddings per children
 
         Content.sizeDelta = new Vector2(Content.rect.width, contentHeight);
     }
@@ -82,6 +84,8 @@ public class TaskEntryManager : MonoBehaviour {
             var inp = inst.transform.Find("Input");
             inp.transform.parent = Panel;
         }
+
+        updateHeight();
         
         Destroy(inst);
     }

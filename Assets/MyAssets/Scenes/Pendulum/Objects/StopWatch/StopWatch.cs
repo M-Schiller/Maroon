@@ -44,7 +44,7 @@ public class StopWatch : MonoBehaviour {
     {
         AssessmentManager.Instance.UpdateEnvironment();
         var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-start"));
-        Debug.Log("Answer: " + String.Join(", ", res.ImmediateFeedackStrings));
+        GuiPendulum.ShowText(res.ImmediateFeedackStrings);
         running = true;
         startTime = Time.time;
     }
@@ -53,7 +53,7 @@ public class StopWatch : MonoBehaviour {
     {
         AssessmentManager.Instance.UpdateEnvironment();
         var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-stop"));
-        Debug.Log("Answer: " + String.Join(", ", res.ImmediateFeedackStrings));
+        GuiPendulum.ShowText(res.ImmediateFeedackStrings);
         running = false;
     }
     

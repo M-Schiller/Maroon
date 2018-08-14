@@ -8,8 +8,15 @@ using Evaluation.UnityInterface;
 using Evaluation.UnityInterface.Events;
 
 public class AssessmentManager : MonoBehaviour {
-    
-    
+
+    [SerializeField]
+    private string AssessmentUrl;
+    [SerializeField]
+    private string AssignmentFileName;
+    [SerializeField]
+    private string FirstSectionName;
+
+
     private static AssessmentManager instance_;
     private EvaluationService evalService_;
     private List<IAssessmentValue> values_;
@@ -28,15 +35,15 @@ public class AssessmentManager : MonoBehaviour {
         try
         {
             Debug.Log("Connecting to WebService");
-            evalService_ = new EvaluationService("http://localhost:51166/EvaluationService.asmx", "pendulum_maroon");
+            evalService_ = new EvaluationService(AssessmentUrl, AssignmentFileName);
             Debug.Log("Got ID: " + evalService_.ContextID);
-            IterationResult result = Send(new EnterSection("pendulum-workplace"));
+            Enabled = true;
+            IterationResult result = Send(new EnterSection(FirstSectionName));
             Debug.Log("Immediate Feedback count: " + result.ImmediateFeedackStrings.Length);
             foreach (String fb in result.ImmediateFeedackStrings)
             {
                 Debug.Log("Feedback: " + fb);
             }
-            Enabled = true;
         } catch(Exception e)
         {
             Enabled = false;

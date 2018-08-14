@@ -73,8 +73,8 @@ public class PendulumManager : MonoBehaviour
             Debug.Log("Sending Release action");
             AssessmentManager.Instance.UpdateEnvironment();
             IterationResult res = AssessmentManager.Instance.Send(new UseObject("operation", "release"));
-            Debug.Log("Got results: " + res.ImmediateFeedackStrings.Length);
-            Debug.Log(String.Join(", ", res.ImmediateFeedackStrings));
+            Debug.Log("Got results" );
+            GuiPendulum.ShowText(res.ImmediateFeedackStrings);
 
             mouseDown = false;
             joint.useLimits = false;

@@ -58,7 +58,7 @@ public class Calculator : MonoBehaviour {
             ec.AddProperty("calculated_frequency", toDouble(rightNumber));
             AssessmentManager.Instance.Send(ec);
             var res = AssessmentManager.Instance.Send(new UseObject("operation", "submit-frequency"));
-            Debug.Log("Final Answer of Server: " + String.Join(", ", res.ImmediateFeedackStrings));
+            GuiPendulum.ShowText(res.ImmediateFeedackStrings);
 
             clear = true;
             return true;
@@ -105,6 +105,9 @@ public class Calculator : MonoBehaviour {
 
     protected double toDouble(string s)
     {
+        if (s == "")
+            return 0;
+
         double res;
         if (!double.TryParse(s, out res))
             throw new Exception(string.Format("Calculator: internal error. Could not parse '{0}' to double.", s));
