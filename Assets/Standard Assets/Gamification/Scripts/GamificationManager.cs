@@ -286,22 +286,7 @@ public class GamificationManager : MonoBehaviour
         else if (instance != this)
             Destroy(gameObject);
 
-       
 
-
-
-    }
-
-  
-
-    public void PlayMenuSound()
-    {
-        menuSound.volume = SoundManager.instance.efxSource.volume;
-        menuSound.Play();
-    }
-
-    public void Start()
-    {
         l_manager = LanguageManager.Load();
         //Set language based on user system language
         if (Application.systemLanguage.ToString() == "German")
@@ -311,6 +296,18 @@ public class GamificationManager : MonoBehaviour
         else
             l_manager.SetCurrentLanguage(Language.English);
 
+    }
+
+
+
+    public void PlayMenuSound()
+    {
+        menuSound.volume = SoundManager.instance.efxSource.volume;
+        menuSound.Play();
+    }
+
+    public void Start()
+    {
         //Add first achievement
         AddAchievement("Achievement 1", "Helpi");
 

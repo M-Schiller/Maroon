@@ -1,20 +1,9 @@
-﻿//-----------------------------------------------------------------------------
-// FieldLineManager.cs
-//
-// Controller class to manage the field lines
-//
-//
-// Authors: Michael Stefan Holly
-//          Michael Schiller
-//          Christopher Schinnerl
-//-----------------------------------------------------------------------------
-//
-
+﻿
 using Evaluation.UnityInterface;
-using Evaluation.UnityInterface.Events;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -56,11 +45,12 @@ public class PendulumManager : MonoBehaviour
     public void Start()
     {
 
-        defaultPosition = transform.position;
+        defaultPosition = PendulumWeight.transform.position;
 
         //This is for initialy setting the ropelength in assessment 
         setRopeLengthRelative(0);
-        
+
+        Calculator.OnButtonPressed += CalculatorButtonPressed;
     }
 
     public void Update()
@@ -71,10 +61,8 @@ public class PendulumManager : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             Debug.Log("Sending Release action");
-            AssessmentManager.Instance.UpdateEnvironment();
-            IterationResult res = AssessmentManager.Instance.Send(new UseObject("operation", "release"));
-            Debug.Log("Got results" );
-            GuiPendulum.ShowText(res.ImmediateFeedackStrings);
+            IterationResult res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "release"));
+            GuiPendulum.ShowFeedback(res.Feedback);
 
             mouseDown = false;
             joint.useLimits = false;
@@ -85,16 +73,26 @@ public class PendulumManager : MonoBehaviour
         {
             if (!mouseDown)
             {
-                mouseDown = true;
-                mouseStart = Input.mousePosition;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit, 100))
+                    if (hit.transform.name == PendulumWeight.name)
+                    {
+                        mouseDown = true;
+                        mouseStart = Input.mousePosition;
+                    }
             }
 
-            //relative mouse movement / (scaling factor for easy use) 
-            var angle = ((mouseStart.x - Input.mousePosition.x) / (ropeLength * 10));
-            //Everything above 140 degrees seems to freak out unity enormously, just don't allow it
-            angle = Math.Min(Math.Max(-140f, angle), 140f);
+            if (mouseDown)
+            {
+                //relative mouse movement / (scaling factor for easy use) 
+                var angle = ((mouseStart.x - Input.mousePosition.x) / (ropeLength * 10));
+                //Everything above 140 degrees seems to freak out unity enormously, just don't allow it
+                angle = Math.Min(Math.Max(-140f, angle), 140f);
 
-            limitHinge(joint, angle);
+                limitHinge(joint, angle);
+            }
         } else if (Input.GetMouseButtonDown(1) )
         {
            if(slow)
@@ -136,13 +134,13 @@ public class PendulumManager : MonoBehaviour
     /// </summary>
     private void assertPosition()
     {
-        if ((!between(-100, transform.position.x, 100))
-            || !between(-100, transform.position.y, 100)
-            || !between(-100, transform.position.z, 100)
+        if (!( between(-100, PendulumWeight.transform.position.x, 100))
+            && between(-100, PendulumWeight.transform.position.y, 100)
+            && between(-100, PendulumWeight.transform.position.z, 100)
             )
         {
             Debug.Log("Assertion Error: resetting position due to far off values");
-            transform.position = defaultPosition;
+            PendulumWeight.transform.position = defaultPosition;
         }
             
     }
@@ -190,22 +188,39 @@ public class PendulumManager : MonoBehaviour
 
         }
 
+        if (Input.GetKeyDown(KeyCode.Space))
+            SceneManager.LoadScene("Laboratory");
+
+
+    }
+
+    private void CalculatorButtonPressed(Calculator.CalculatorButtonPressedEvent evt)
+    {
+        if (evt.Name != "enter")
+            return;
+
+        var ge = GameEventBuilder
+            .EnvironmentVariable(name, "calculated_frequency", evt.CurrentNumber)
+            .Add(GameEventBuilder.UseObject("operation", "submit-frequency"));
+
+        var res = AssessmentManager.Instance.Send(ge);
+        GuiPendulum.ShowFeedback(res.Feedback);
     }
 
     private void adjustWeight()
     {
-        var obj = GameObject.Find(name + "/weight_obj/weight_gizmo");
+        var obj = PendulumWeight.transform.Find("weight_obj/weight_gizmo");
 
         weight = Math.Min(Math.Max(weight, weightMin), weightMax);
         obj.transform.localScale = new Vector3(weight / 1000, weight / 1000, weight / 1000);
 
         //set the weight at the rigidbody (doesn't change anything physically, but.. you know...)
-        GetComponent<Rigidbody>().mass = weight;
+        PendulumWeight.GetComponent<Rigidbody>().mass = weight;
 
     }
     private void drawRope()
     {
-        var startPos = GameObject.Find(name + "/weight_obj").transform.position;
+        var startPos = PendulumWeight.transform.Find("weight_obj").transform.position;
         startPos.Set(startPos.x, startPos.y, startPos.z);
         DrawLine(startPos, StandRopeJoint.transform.position, new Color(0, 0, 0));
     }
@@ -214,20 +229,21 @@ public class PendulumManager : MonoBehaviour
     {
         limitHinge(PendulumWeight.GetComponent<HingeJoint>(), 0);
         Vector3 currPos = PendulumWeight.transform.position;
-        var obj = GameObject.Find(PendulumWeight.name + "/weight_obj");
+        var obj = PendulumWeight.transform.Find("weight_obj");
         var pos = obj.transform.position;
         float newVal = Math.Max(-ropeMax, -ropeLength + value);
         newVal = Math.Min(newVal, -ropeMin);
         ropeLength = -newVal;
 
         pos.Set(transform.position.x, transform.position.y - ropeLength, transform.position.z);
-
         obj.transform.position = pos;
 
-        // f = 1/(2pi) * wurzel(g/l)
-        EnvironmentalChange ec = new EnvironmentalChange(this.name);
-        Debug.Log("updating theoretical frequency");
-        ec.AddProperty("theoretical_frequency", 1 / (2 * Math.PI) * Math.Sqrt(9.81 / ropeLength));
+        var ec = GameEventBuilder.EnvironmentVariable(
+            this.name,
+            "theoretical_frequency",
+            1 / (2 * Math.PI) * Math.Sqrt(Physics.gravity.magnitude / ropeLength)
+        );
+
         AssessmentManager.Instance.Send(ec);
     }
 

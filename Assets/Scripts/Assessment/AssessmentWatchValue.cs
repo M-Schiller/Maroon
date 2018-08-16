@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using Evaluation.UnityInterface;
-using Evaluation.UnityInterface.Events;
 
 public class AssessmentWatchValue : IAssessmentValue {
 
@@ -46,10 +45,8 @@ public class AssessmentWatchValue : IAssessmentValue {
             else
                 properties.Add(prop);
         }
-
-
-
-        AssessmentManager.Instance.RegisterValue(this);
+        
+        GuiPendulum.ShowFeedback(AssessmentManager.Instance.RegisterValue(this).Feedback);
     }
 	
     private ParentProp GetMember(string name, Type ParentType)
@@ -87,20 +84,24 @@ public class AssessmentWatchValue : IAssessmentValue {
             foreach (Property prop in properties)
                 prop.Update();
         else 
-            AssessmentManager.Instance.Send(GetEvalEvent());
+            AssessmentManager.Instance.Send(GameEvent);
     }
 
-    public override EnvironmentalChange GetEvalEvent()
-    {
-        EnvironmentalChange ev = new EnvironmentalChange(this.gameObject.name);
+    public override GameEvent GameEvent {
+        get {
+            GameEvent ev = new GameEvent();
 
-        foreach (Property prop in properties)
-        {
-            prop.Update();
-            ev.AddProperty(prop.FullName, prop.GetValue);
+            foreach (Property prop in properties)
+            {
+                prop.Update();
+                ev.Add(GameEventBuilder.EnvironmentVariable(this.gameObject.name, prop.FullName, prop.GetValue));
+            }
+
+            return ev;
         }
-
-        return ev;
+        set {
+            throw new AccessViolationException("Set GameEvent is not allowed on this object. GameEvent gets calculated.");
+        }
     }
 
     public class Property

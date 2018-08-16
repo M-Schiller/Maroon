@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using Evaluation.UnityInterface.Events;
+using Evaluation.UnityInterface;
 
 public class StopWatch : MonoBehaviour {
 
@@ -43,8 +43,8 @@ public class StopWatch : MonoBehaviour {
     public void SWStart()
     {
         AssessmentManager.Instance.UpdateEnvironment();
-        var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-start"));
-        GuiPendulum.ShowText(res.ImmediateFeedackStrings);
+        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-start"));
+        GuiPendulum.ShowFeedback(res.Feedback);
         running = true;
         startTime = Time.time;
     }
@@ -52,8 +52,8 @@ public class StopWatch : MonoBehaviour {
     public void SWStop()
     {
         AssessmentManager.Instance.UpdateEnvironment();
-        var res = AssessmentManager.Instance.Send(new UseObject("operation", "sw-stop"));
-        GuiPendulum.ShowText(res.ImmediateFeedackStrings);
+        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-stop"));
+        GuiPendulum.ShowFeedback(res.Feedback);
         running = false;
     }
     

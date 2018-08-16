@@ -2,10 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using UnityEngine;
-using Evaluation;
 using Evaluation.UnityInterface;
-using Evaluation.UnityInterface.Events;
 
 public class AssessmentManager : MonoBehaviour {
 
@@ -38,12 +37,23 @@ public class AssessmentManager : MonoBehaviour {
             evalService_ = new EvaluationService(AssessmentUrl, AssignmentFileName);
             Debug.Log("Got ID: " + evalService_.ContextID);
             Enabled = true;
-            IterationResult result = Send(new EnterSection(FirstSectionName));
-            Debug.Log("Immediate Feedback count: " + result.ImmediateFeedackStrings.Length);
-            foreach (String fb in result.ImmediateFeedackStrings)
-            {
-                Debug.Log("Feedback: " + fb);
-            }
+            //var ev = GameEventBuilder.EnterSection(FirstSectionName);
+            var ev = new GameEvent().Add(
+                new PlayerAction() {
+                    Name = "EnterSection",
+                    Parameters = new ActionParameter[] {
+                             new ActionParameter () {
+                                Name = "section_class",
+                                Value = FirstSectionName
+                            }
+                        }
+                }
+            );
+
+
+
+            IterationResult result = Send(ev);
+            GuiPendulum.ShowFeedback(result.Feedback);
         } catch(Exception e)
         {
             Enabled = false;
@@ -55,39 +65,41 @@ public class AssessmentManager : MonoBehaviour {
     public void UpdateEnvironment()
     {
         if (!Enabled)
-            return; 
+            return;
 
-        foreach (IAssessmentValue val in values_)
-            if (!val.ContinousUpdate)
-            {
-                Debug.Log("Sending " + val.name);
-                Send(val.GetEvalEvent());
-            }
+        Send(GetAllEnvironmentalChanges());
     }
 
-    public IterationResult Send(IEvalEvent Event)
+    private GameEvent GetAllEnvironmentalChanges()
+    {
+        if (values_.Count > 0)
+            return values_.Where(val => !val.ContinousUpdate).Select(val => val.GameEvent).Aggregate((prev, curr) => prev.Add(curr));
+        else
+            return new GameEvent();
+    }
+
+    public IterationResult Send(GameEvent Event, bool UpdateOfEnvironment = true)
     {
         if (!Enabled)
             return new IterationResult(null);
 
+        if (UpdateOfEnvironment)
+            Event.Add(GetAllEnvironmentalChanges());
+        
         return evalService_.Send(Event);
     }
+    
 
-    public void RegisterValue(IAssessmentValue Value)
+    public IterationResult RegisterValue(IAssessmentValue Value)
     {
         Debug.Log("registering value: " + Value.gameObject.name);
         values_.Add(Value);
         if(evalService_ == null)
         {
             Debug.Log("Warning! Assessmentservice is not active!");
-            return;
+            return new IterationResult(null);
         }
-        IterationResult res = evalService_.Send(Value.GetEvalEvent(), true);
-        if(res.ImmediateFeedackStrings.Length > 0)
-        {
-            Debug.Log("Got a result during registration:");
-            Debug.Log(String.Join(", ", res.ImmediateFeedackStrings));
-        }
+        return evalService_.Send(Value.GameEvent, true);
     }
 
     public void PrintSummary()
@@ -97,9 +109,16 @@ public class AssessmentManager : MonoBehaviour {
 
     public void Update()
     {
-        foreach (IAssessmentValue val in values_)
-            if (val.ContinousUpdate)
-                Send(val.GetEvalEvent());
+        if (values_.Count == 0)
+            return;
+
+        var evt = values_
+            .Where(val => val.ContinousUpdate)
+            .Select(val => val.GameEvent)
+            .Aggregate(new GameEvent(), (prev, curr) => prev.Add(curr));
+
+        if (evt.Actions.Length > 0 || evt.EnvironmentChanges.Length > 0)
+            evalService_.Send(evt);
     }
 }
 

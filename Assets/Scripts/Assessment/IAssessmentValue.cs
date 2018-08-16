@@ -1,4 +1,4 @@
-﻿using Evaluation.UnityInterface.Events;
+﻿using Evaluation.UnityInterface;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,5 +8,5 @@ using UnityEngine;
 public abstract class IAssessmentValue : MonoBehaviour
 {
     public bool ContinousUpdate = false;
-    public abstract EnvironmentalChange GetEvalEvent();
+    public abstract GameEvent GameEvent {  get; set; }
 }

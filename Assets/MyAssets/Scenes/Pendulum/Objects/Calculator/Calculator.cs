@@ -1,10 +1,31 @@
-﻿using Evaluation.UnityInterface.Events;
+﻿
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Calculator : MonoBehaviour {
+
+    public class CalculatorButtonPressedEvent : EventArgs
+    {
+        public string Name { get; private set; }
+        public List<KeyCode> Keycodes { get; private set; }
+        public DateTime SystemTime { get; private set; }
+        public Time GameTime { get; private set; }
+        public double CurrentNumber { get; private set; }
+
+        public CalculatorButtonPressedEvent(string  name, List<KeyCode> keycodes, double currentNumber)
+        {
+            Name = name;
+            Keycodes = keycodes;
+            SystemTime = DateTime.Now;
+            GameTime = new Time();
+            CurrentNumber = currentNumber;
+        }
+    }
+
+    public delegate void ButtonPressed(CalculatorButtonPressedEvent ev);
+    public static event ButtonPressed OnButtonPressed;
 
     private static int visibleDigits = 15;
 
@@ -40,6 +61,8 @@ public class Calculator : MonoBehaviour {
                 leftNumber = "0";
             rightNumber = "";
             op = x;
+
+
             return true;
         };
 
@@ -54,11 +77,6 @@ public class Calculator : MonoBehaviour {
 
         var btnEnter = AddButton("enter", KeyCode.KeypadEnter, ((string x) => {
             reduce();
-            EnvironmentalChange ec = new EnvironmentalChange(this.name);
-            ec.AddProperty("calculated_frequency", toDouble(rightNumber));
-            AssessmentManager.Instance.Send(ec);
-            var res = AssessmentManager.Instance.Send(new UseObject("operation", "submit-frequency"));
-            GuiPendulum.ShowText(res.ImmediateFeedackStrings);
 
             clear = true;
             return true;
@@ -97,6 +115,7 @@ public class Calculator : MonoBehaviour {
 
         Debug.Log(String.Format("Button '{0}' pressed, method name '{1}'", buttonPressed.name, buttonPressed.action.Method.Name));
         buttonPressed.action.Invoke(buttonPressed.name);
+        OnButtonPressed(new CalculatorButtonPressedEvent(buttonPressed.name, buttonPressed.keycodes, toDouble(rightNumber)));
 
         displayNumber();
     }
@@ -105,7 +124,7 @@ public class Calculator : MonoBehaviour {
 
     protected double toDouble(string s)
     {
-        if (s == "")
+        if (s == "" || s == ".")
             return 0;
 
         double res;
@@ -243,7 +262,5 @@ public class Calculator : MonoBehaviour {
         public string name;
         public List<KeyCode> keycodes = new List<KeyCode>();
         public Func<string, bool> action;
-
-
     }
 }
