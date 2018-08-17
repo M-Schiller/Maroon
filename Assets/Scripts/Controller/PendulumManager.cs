@@ -1,10 +1,10 @@
 ﻿
 using Evaluation.UnityInterface;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using Evaluation.UnityInterface;
 
 /// <summary>
 /// Controller class to manage the field lines
@@ -58,7 +58,7 @@ public class PendulumManager : MonoBehaviour
 
         HingeJoint joint = PendulumWeight.GetComponent<HingeJoint>();
 
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(0) && mouseDown)
         {
             Debug.Log("Sending Release action");
             IterationResult res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "release"));
@@ -205,6 +205,16 @@ public class PendulumManager : MonoBehaviour
 
         var res = AssessmentManager.Instance.Send(ge);
         GuiPendulum.ShowFeedback(res.Feedback);
+
+        if(res.Feedback.Length > 0)
+            if(res.Feedback.Where(e => e.ColorCode == Evaluation.UnityInterface.EWS.ColorCode.Success).FirstOrDefault() != null)
+            {
+                GuiPendulum.Clear();
+                var res2 = AssessmentManager.Instance.Send(GameEventBuilder.EnterSection("pendulum_maroon_2"));
+                GuiPendulum.ShowFeedback(res2.Feedback);
+            }
+
+        
     }
 
     private void adjustWeight()
@@ -273,7 +283,6 @@ public class PendulumManager : MonoBehaviour
         joint.useLimits = true;
         joint.limits = jl;
     }
-
-
+    
 
 }

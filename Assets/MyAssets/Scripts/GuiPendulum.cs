@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Evaluation.UnityInterface;
-
+using Evaluation.UnityInterface.EWS;
 
 public class GuiPendulum : MonoBehaviour {
 
@@ -75,7 +75,13 @@ public class GuiPendulum : MonoBehaviour {
         {
             if(fb.IsQuestion)
             {
-                TEM.AddElement(fb.Text, true, fb.VariableType);
+                var args = new TaskEntryManager.AddElementArguments() {
+                    VariableName = fb.VariableName,
+                    VariableType = fb.VariableType,
+                    Text = fb.Text,
+                    SendHandler = ButtonSendPressed,
+                };
+                TEM.AddElement(args);
             } else
             {
                 ShowText(fb.Text);
@@ -98,6 +104,67 @@ public class GuiPendulum : MonoBehaviour {
         ShowText(String.Join(", ", text).Trim());
     }
 
+    private static void ButtonBoolPressed(string VariableName, bool value)
+    {
+        AssessmentManager.Instance.Send(
+            GameEventBuilder.EnvironmentVariable("assessment", VariableName, value)
+        );
+    }
+    
+    public static void Clear()
+    {
+        Instance.defaultText();
+        Instance.AssignmentSheet.GetComponent<TaskEntryManager>().Clear();
+        
+    }
 
+    private static bool ButtonSendPressed(TaskEntryManager.ButtonPressedEvent evt)
+    {
+
+        switch (evt.VariableType)
+        {
+            case DataType.Float:
+                double dbl;
+                if(!double.TryParse(evt.Value.ToString(), out dbl))
+                {
+                    Debug.Log(string.Format("Could not parse {0} to double, falling back to string", evt.Value.ToString()));
+                    Send(evt.VariableName, evt.Value.ToString());
+                } else
+                    Send(evt.VariableName, dbl);
+
+                break;
+
+            case DataType.Integer:
+                int i;
+                if (!int.TryParse(evt.Value.ToString(), out i))
+                {
+                    Debug.Log(string.Format("Could not parse {0} to integer, falling back to string", evt.Value.ToString()));
+                    Send(evt.VariableName, evt.Value.ToString());
+                } else
+                    Send(evt.VariableName, i);
+
+                break;
+
+            case DataType.Boolean:
+                Send(evt.VariableName, (bool)evt.Value);
+                break;
+
+            default:
+                Send(evt.VariableName, evt.Value.ToString());
+                break;
+
+        }
+
+        return true;
+
+    }
+
+
+    private static void Send<T>(string name, T value)
+    {
+        AssessmentManager.Instance.Send(
+            GameEventBuilder.EnvironmentVariable("assessment", name, value)
+        );
+    }
 
 }

@@ -50,8 +50,6 @@ public class AssessmentManager : MonoBehaviour {
                 }
             );
 
-
-
             IterationResult result = Send(ev);
             GuiPendulum.ShowFeedback(result.Feedback);
         } catch(Exception e)

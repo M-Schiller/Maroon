@@ -3,10 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+using Evaluation.UnityInterface.EWS;
 public class TaskEntryManager : MonoBehaviour {
 
-    [SerializeField]
     private GameObject TaskEntryPrefab;
 
     private bool Active;
@@ -19,6 +18,8 @@ public class TaskEntryManager : MonoBehaviour {
 
     private float visibleY;
 
+    private List<ElementGroup> elements = new List<ElementGroup>();
+
     private void Awake()
     {
         if (TaskEntryPrefab == null)
@@ -27,13 +28,14 @@ public class TaskEntryManager : MonoBehaviour {
         Canvas = transform as RectTransform;
         Content = Canvas.Find("Scroll View").Find("Viewport").Find("Content") as RectTransform;
         Panel = Content.Find("Panel") as RectTransform;
+        TaskEntryPrefab = Content.Find("TaskEntryPrefab").gameObject;
     }
 
     // Use this for initialization
     void Start() {
 
         updateHeight();
-        visibleY = transform.position.y;
+        visibleY = transform.localPosition.y;
         Hide();
     }
 	
@@ -45,12 +47,12 @@ public class TaskEntryManager : MonoBehaviour {
     private void Hide()
     {
         //don't have a better solutiuon, so i will just push it through the roof
-        transform.position.Set(transform.position.x, transform.position.y + 10000, transform.position.z);
+        transform.localPosition.Set(transform.localPosition.x, transform.localPosition.y + 10000, transform.localPosition.z);
     }
     private void Show()
     {
         //don't have a better solutiuon, so i will just push it through the roof
-        transform.position.Set(transform.position.x, visibleY, transform.position.z);
+        transform.localPosition.Set(transform.localPosition.x, visibleY, transform.localPosition.z);
     }
     private void updateHeight()
     {
@@ -89,29 +91,57 @@ public class TaskEntryManager : MonoBehaviour {
         Content.sizeDelta = new Vector2(Content.rect.width, contentHeight);
     }
 
-    public void AddElement(string Text, bool Input, string Type = "String" )
+
+
+    public void AddElement(AddElementArguments args)
     {
+        args.CheckConsistency();
+
         var inst = Instantiate(TaskEntryPrefab);
 
         var text = inst.transform.Find("Text");
-        text.GetComponent<Text>().text = Text;
+        text.GetComponent<Text>().text = args.Text;
         text.transform.parent = Panel;
         SetCorrectRotationAndScale(text.transform as RectTransform);
+        
 
-        if (Input)
+        if (args.VariableName != null)
         {
-            if(Type == "Boolean")
+            if(args.VariableType == DataType.Boolean)
             {
                 var btn = inst.transform.Find("Button");
                 btn.transform.parent = Panel;
-                btn.transform.Find("Text").GetComponent<Text>().text = "Yes";
-                SetCorrectRotationAndScale(btn.transform as RectTransform);
-
                 var inst2 = Instantiate(TaskEntryPrefab);
                 var btn2 = inst2.transform.Find("Button");
                 btn2.transform.parent = Panel;
+
+                btn.transform.Find("Text").GetComponent<Text>().text = "Yes";
+                SetCorrectRotationAndScale(btn.transform as RectTransform);
+                btn.GetComponent<Button>().onClick.AddListener(delegate {
+                    internalEventHandler(
+                        btn.GetComponent<Button>(),
+                        null,
+                        true,
+                        text.GetComponent<Text>(),
+                        args.VariableName,
+                        args.VariableType,
+                        args.SendHandler
+                    );
+                });
+
                 btn2.transform.Find("Text").GetComponent<Text>().text = "No";
                 SetCorrectRotationAndScale(btn2.transform as RectTransform);
+                btn2.GetComponent<Button>().onClick.AddListener(delegate {
+                    internalEventHandler(
+                        btn.GetComponent<Button>(),
+                        null,
+                        false,
+                        text.GetComponent<Text>(),
+                        args.VariableName,
+                        args.VariableType,
+                        args.SendHandler
+                    );
+                });
             } else
             {
                 var inp = inst.transform.Find("Input");
@@ -120,6 +150,17 @@ public class TaskEntryManager : MonoBehaviour {
                 btn.transform.parent = Panel;
                 SetCorrectRotationAndScale(inp.transform as RectTransform);
                 SetCorrectRotationAndScale(btn.transform as RectTransform);
+                btn.GetComponent<Button>().onClick.AddListener(delegate {
+                    internalEventHandler(
+                        btn.GetComponent<Button>(),
+                        inp.GetComponent<InputField>(),
+                        true,
+                        text.GetComponent<Text>(),
+                        args.VariableName,
+                        args.VariableType,
+                        args.SendHandler 
+                    );
+                });
             }
         }
 
@@ -129,9 +170,92 @@ public class TaskEntryManager : MonoBehaviour {
         Show();
     }
 
+    public void Clear()
+    {
+        foreach (Transform tr in Panel)
+        {
+            tr.parent = null;
+            Destroy(tr.gameObject);
+        }
+
+        updateHeight();
+    }
+
     private void SetCorrectRotationAndScale(RectTransform obj)
     {
         obj.localScale = new Vector3(1, 1, 1);
         obj.localRotation = Quaternion.identity;
+    }
+
+    private static void internalEventHandler(Button btn, InputField txt, bool yes, Text initText, string varName, DataType varType, Func<ButtonPressedEvent, bool> handler)
+    {
+        var ret = new ButtonPressedEvent()
+        {
+           Value = (txt != null) ? txt.text : null,
+           Sender = btn,
+           Textbar = txt,
+           InitialText = initText,
+           VariableName = varName,
+           VariableType = varType,
+           SystemTime = DateTime.Now,
+           UnityTime = new Time()
+        };
+        
+
+        if (ret.Value == null)
+            ret.Value = yes;
+
+
+        if (handler(ret))
+        {
+            initText.color = new Color(initText.color.r, initText.color.g, initText.color.b, 0.5f);
+
+        }
+}
+
+
+
+
+    public class ButtonPressedEvent : EventArgs
+    {
+        public object Value;
+        public Button Sender;
+        public InputField Textbar;
+        public Component[] ComponentGroup;
+        public Text InitialText;
+        public string VariableName;
+        public DataType VariableType;
+        public DateTime SystemTime;
+        public Time UnityTime;
+    }
+    public class AddElementArguments
+    {
+        public string Text { get; set; }
+        public string VariableName { get; set; }
+        public DataType VariableType { get; set; }
+        public Func<ButtonPressedEvent, bool> SendHandler { get; set; }
+
+        public void CheckConsistency()
+        {
+            Func<object, bool> isEmpty = (object var) => var == null || var.ToString() == "";
+
+            if (isEmpty(Text))
+                throw new ArgumentNullException("Text is mandatory");
+
+            if (!isEmpty(VariableName) && isEmpty(VariableType))
+                throw new ArgumentNullException("If a VariableName is provided, VariableType is mandatory");
+
+            if (!isEmpty(VariableType) && isEmpty(SendHandler))
+                throw new ArgumentNullException("If a VariableName and VariableType is given, a SendHandler must be provided");
+
+        }
+    }
+
+    public class ElementGroup
+    {
+        public Text VisibleText;
+        public InputField InputField;
+        public Button Button1;
+        public Button Button2;
     }
 }
