@@ -16,10 +16,12 @@ public class PendulumManager : MonoBehaviour
     [SerializeField]
     private GameObject StandRopeJoint;
     [SerializeField]
-    private GameObject StopWatch;
+    public GameObject Stopwatch;
     [SerializeField]
     private GameObject InfoTextPanel;
-    
+    [SerializeField]
+    private GameObject SlowMoObject;
+
     public float ropeLength = 0.3f;
     public float weight = 1.0f;
 
@@ -51,6 +53,8 @@ public class PendulumManager : MonoBehaviour
         setRopeLengthRelative(0);
 
         Calculator.OnButtonPressed += CalculatorButtonPressed;
+        StopWatch.OnStart += StopWatchStart;
+        StopWatch.OnStop += StopWatchStop;
     }
 
     public void Update()
@@ -81,6 +85,21 @@ public class PendulumManager : MonoBehaviour
                     {
                         mouseDown = true;
                         mouseStart = Input.mousePosition;
+                    } else if (hit.transform.name == Stopwatch.name)
+                    {
+                        if (Stopwatch.GetComponent<StopWatch>().isRunning)
+                            Stopwatch.SendMessage("SWStop");
+                        else
+                            Stopwatch.SendMessage("SWStart");
+                    } else if (hit.transform.name == SlowMoObject.name)
+                    {
+                        if (slow)
+                            Time.timeScale = 1.0f;
+                        else
+                            Time.timeScale = 0.2f;
+
+                        Time.fixedDeltaTime = 0.02F * Time.timeScale;
+                        slow = !slow;
                     }
             }
 
@@ -95,14 +114,12 @@ public class PendulumManager : MonoBehaviour
             }
         } else if (Input.GetMouseButtonDown(1) )
         {
-           if(slow)
-                Time.timeScale = 1.0f;
-            else
-                Time.timeScale = 0.2f;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
 
-            Time.fixedDeltaTime = 0.02F * Time.timeScale;
-            slow = !slow;
-                       
+            if (Physics.Raycast(ray, out hit, 100))
+                if (hit.transform.name == Stopwatch.name)
+                    Stopwatch.SendMessage("SWReset");
         }
 
         if (Input.GetAxis("Mouse ScrollWheel") > 0)
@@ -162,6 +179,9 @@ public class PendulumManager : MonoBehaviour
         if (!Input.anyKeyDown)
             return;
 
+        if (GuiPendulum.isFocused())
+            return;
+
         if (Input.GetKeyDown(KeyCode.W))
         {
 
@@ -180,18 +200,23 @@ public class PendulumManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            StopWatch.SendMessage("SWStart");
+            Stopwatch.SendMessage("SWStart");
         } 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            StopWatch.SendMessage("SWStop");
+            Stopwatch.SendMessage("SWStop");
 
         }
 
         if (Input.GetKeyDown(KeyCode.Space))
-            SceneManager.LoadScene("Laboratory");
+            ExitExperiment();
 
 
+    }
+
+    public static void ExitExperiment()
+    {
+        SceneManager.LoadScene("Laboratory");
     }
 
     private void CalculatorButtonPressed(Calculator.CalculatorButtonPressedEvent evt)
@@ -215,6 +240,17 @@ public class PendulumManager : MonoBehaviour
             }
 
         
+    }
+
+    private void StopWatchStart(StopWatch.StopWatchEvent evt)
+    {
+        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-start"));
+        GuiPendulum.ShowFeedback(res.Feedback);
+    }
+    private void StopWatchStop(StopWatch.StopWatchEvent evt)
+    {
+        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-stop"));
+        GuiPendulum.ShowFeedback(res.Feedback);
     }
 
     private void adjustWeight()
@@ -248,10 +284,17 @@ public class PendulumManager : MonoBehaviour
         pos.Set(transform.position.x, transform.position.y - ropeLength, transform.position.z);
         obj.transform.position = pos;
 
+        double theoretical_freq = 1 / (2 * Math.PI) * Math.Sqrt(Physics.gravity.magnitude / ropeLength);
         var ec = GameEventBuilder.EnvironmentVariable(
             this.name,
             "theoretical_frequency",
-            1 / (2 * Math.PI) * Math.Sqrt(Physics.gravity.magnitude / ropeLength)
+            theoretical_freq
+        ).Add(
+            GameEventBuilder.EnvironmentVariable(
+                this.name,
+                "theoretical_period",
+                1 / theoretical_freq
+            )
         );
 
         AssessmentManager.Instance.Send(ec);

@@ -6,57 +6,103 @@ using Evaluation.UnityInterface;
 
 public class StopWatch : MonoBehaviour {
 
-    public GameObject MinuteHand;
-    public GameObject SecondsHand;
-    public GameObject TextDisplay = null;
+    [SerializeField]
+    private GameObject MinuteHand;
+    [SerializeField]
+    private GameObject SecondsHand;
+    [SerializeField]
+    private GameObject TextDisplay = null;
 
-    private Boolean running;
+
+    public delegate void  StateChange(StopWatchEvent evt);
+    public static event StateChange OnStart;
+    public static event StateChange OnStop;
+    public static event StateChange OnReset;
+    public static event StateChange OnTick;
+
+    private float lastElapsed;
+
+    public class StopWatchEvent
+    {
+        public double SecondsPassed = 0;
+        public double MinutesPassed = 0;
+        public double MillisecondsPassed = 0;
+        public bool isRunning = false;
+        public DateTime SystemTime = DateTime.Now;
+        public Time GameTime = new Time();
+
+        public StopWatchEvent(double elapsed, bool running)
+        {
+            SecondsPassed = elapsed;
+            MillisecondsPassed = SecondsPassed * 1000;
+            MinutesPassed = SecondsPassed / 60;
+        }
+    }
+
+    public Boolean isRunning { get; private set; }
+    public Boolean isReset { get; private set; }
+
+    public double Elapsed {  get {
+            if (isReset)
+                return 0;
+
+            return Time.time - startTime;
+        }
+    }
     private float startTime;
 
 
     // Use this for initialization
     void Start () {
-        running = false;
+        isRunning = false;
         SWReset();
 	}
 
     // Update is called once per frame
     void Update() {
-        if (!running)
+       if (!isRunning)
             return;
 
-        float passed = Time.time - startTime;
-        SetSecondsHand(passed * 1000);
-        SetMinutesHand(passed / 60);
-        SetText(passed);
-        
+        isReset = false;
+        var evt = new StopWatchEvent(Elapsed, isRunning);
+        SetSecondsHand(evt.MillisecondsPassed);
+        SetMinutesHand(evt.MinutesPassed);
+        SetText(evt.SecondsPassed);
+
+        if (OnTick != null)
+            OnTick(evt);
     }
 
+    public void SWStart()
+    {
+        isRunning = true;
+        startTime = Time.time - lastElapsed;
+
+        if (OnStart != null)
+            OnStart(new StopWatchEvent(Elapsed, isRunning));
+    }
+
+    public void SWStop()
+    {
+        isRunning = false;
+        lastElapsed = (float)Elapsed;
+
+        if (OnStop != null)
+            OnStop(new StopWatchEvent(Elapsed, isRunning));
+    }
     public void SWReset()
     {
+        isReset = true;
+        if (OnReset != null)
+            OnReset(new StopWatchEvent(Elapsed, isRunning));
+
+        lastElapsed = 0;
         startTime = Time.time;
         SetSecondsHand(0);
         SetMinutesHand(0);
         SetText(0);
     }
 
-    public void SWStart()
-    {
-        AssessmentManager.Instance.UpdateEnvironment();
-        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-start"));
-        GuiPendulum.ShowFeedback(res.Feedback);
-        running = true;
-        startTime = Time.time;
-    }
-
-    public void SWStop()
-    {
-        AssessmentManager.Instance.UpdateEnvironment();
-        var res = AssessmentManager.Instance.Send(GameEventBuilder.UseObject("operation", "sw-stop"));
-        GuiPendulum.ShowFeedback(res.Feedback);
-        running = false;
-    }
-    
     private void SetText(double number)
     {
         if (!TextDisplay)

@@ -6,7 +6,11 @@ using UnityEngine.UI;
 using Evaluation.UnityInterface.EWS;
 public class TaskEntryManager : MonoBehaviour {
 
-    private GameObject TaskEntryPrefab;
+    private GameObject TaskEntryPrefab_text;
+    private GameObject TaskEntryPrefab_inp;
+    private GameObject TaskEntryPrefab_btn;
+
+    private GameObject Trash;
 
     private bool Active;
 
@@ -18,22 +22,26 @@ public class TaskEntryManager : MonoBehaviour {
 
     private float visibleY;
 
-    private List<ElementGroup> elements = new List<ElementGroup>();
+    public List<ElementGroup> Elements = new List<ElementGroup>();
 
     private void Awake()
     {
-        if (TaskEntryPrefab == null)
-            throw new Exception("Task Entry Prefab must be provided to ensure full functionallity of the Assignment Sheet");
-
         Canvas = transform as RectTransform;
         Content = Canvas.Find("Scroll View").Find("Viewport").Find("Content") as RectTransform;
         Panel = Content.Find("Panel") as RectTransform;
-        TaskEntryPrefab = Content.Find("TaskEntryPrefab").gameObject;
+        Trash = Content.Find("Trash").gameObject;
+
+        TaskEntryPrefab_text = Content.Find("TaskEntryPrefab").Find("Text").gameObject;
+        TaskEntryPrefab_inp = Content.Find("TaskEntryPrefab").Find("InputField").gameObject;
+        TaskEntryPrefab_btn = Content.Find("TaskEntryPrefab").Find("Button").gameObject;
+
+
+        if (TaskEntryPrefab_text == null || TaskEntryPrefab_inp == null || TaskEntryPrefab_btn == null )
+            throw new Exception("Task Entry Prefab must be provided to ensure full functionallity of the Assignment Sheet");
     }
 
     // Use this for initialization
     void Start() {
-
         updateHeight();
         visibleY = transform.localPosition.y;
         Hide();
@@ -87,8 +95,8 @@ public class TaskEntryManager : MonoBehaviour {
         }
 
         contentHeight += Panel.childCount * vlg.padding.top;//these are the paddings per children
-
         Content.sizeDelta = new Vector2(Content.rect.width, contentHeight);
+        Content.offsetMax = new Vector2(0, Content.offsetMax.y);
     }
 
 
@@ -97,32 +105,31 @@ public class TaskEntryManager : MonoBehaviour {
     {
         args.CheckConsistency();
 
-        var inst = Instantiate(TaskEntryPrefab);
-
-        var text = inst.transform.Find("Text");
-        text.GetComponent<Text>().text = args.Text;
-        text.transform.parent = Panel;
+        var group = new ElementGroup();
+        var text = Instantiate(TaskEntryPrefab_text);
+        text.transform.SetParent(Panel);
+        group.VisibleText = text.GetComponent<Text>();
+        group.VisibleText.text = args.Text;
         SetCorrectRotationAndScale(text.transform as RectTransform);
-        
 
         if (args.VariableName != null)
         {
             if(args.VariableType == DataType.Boolean)
             {
-                var btn = inst.transform.Find("Button");
-                btn.transform.parent = Panel;
-                var inst2 = Instantiate(TaskEntryPrefab);
-                var btn2 = inst2.transform.Find("Button");
-                btn2.transform.parent = Panel;
+                var btn = Instantiate(TaskEntryPrefab_btn);
+                var btn2 = Instantiate(TaskEntryPrefab_btn);
+                btn.transform.SetParent(Panel);
+                btn2.transform.SetParent(Panel);
+
+                group.Button1 = btn.GetComponent<Button>();
+                group.Button2 = btn2.GetComponent<Button>();
 
                 btn.transform.Find("Text").GetComponent<Text>().text = "Yes";
                 SetCorrectRotationAndScale(btn.transform as RectTransform);
                 btn.GetComponent<Button>().onClick.AddListener(delegate {
                     internalEventHandler(
-                        btn.GetComponent<Button>(),
-                        null,
+                        group,
                         true,
-                        text.GetComponent<Text>(),
                         args.VariableName,
                         args.VariableType,
                         args.SendHandler
@@ -133,10 +140,8 @@ public class TaskEntryManager : MonoBehaviour {
                 SetCorrectRotationAndScale(btn2.transform as RectTransform);
                 btn2.GetComponent<Button>().onClick.AddListener(delegate {
                     internalEventHandler(
-                        btn.GetComponent<Button>(),
-                        null,
+                        group,
                         false,
-                        text.GetComponent<Text>(),
                         args.VariableName,
                         args.VariableType,
                         args.SendHandler
@@ -144,18 +149,20 @@ public class TaskEntryManager : MonoBehaviour {
                 });
             } else
             {
-                var inp = inst.transform.Find("Input");
-                inp.transform.parent = Panel;
-                var btn = inst.transform.Find("Button");
-                btn.transform.parent = Panel;
+                var inp = Instantiate(TaskEntryPrefab_inp);
+                var btn = Instantiate(TaskEntryPrefab_btn);
+                inp.transform.SetParent(Panel);
+                btn.transform.SetParent(Panel);
                 SetCorrectRotationAndScale(inp.transform as RectTransform);
                 SetCorrectRotationAndScale(btn.transform as RectTransform);
+
+                group.Button1 = btn.GetComponent<Button>();
+                group.InputField = inp.GetComponent<InputField>();
+
                 btn.GetComponent<Button>().onClick.AddListener(delegate {
                     internalEventHandler(
-                        btn.GetComponent<Button>(),
-                        inp.GetComponent<InputField>(),
-                        true,
-                        text.GetComponent<Text>(),
+                        group,
+                        false,
                         args.VariableName,
                         args.VariableType,
                         args.SendHandler 
@@ -164,7 +171,7 @@ public class TaskEntryManager : MonoBehaviour {
             }
         }
 
-        Destroy(inst);
+        Elements.Add(group);
 
         updateHeight();
         Show();
@@ -172,11 +179,14 @@ public class TaskEntryManager : MonoBehaviour {
 
     public void Clear()
     {
+        Trash.SetActive(false);
+
         foreach (Transform tr in Panel)
-        {
-            tr.parent = null;
-            Destroy(tr.gameObject);
-        }
+            tr.SetParent( Trash.transform);
+
+        //some f*** buttons stays behind and no one knows why...
+        foreach (Transform tr in Panel)
+            tr.SetParent(Trash.transform);
 
         updateHeight();
     }
@@ -185,16 +195,16 @@ public class TaskEntryManager : MonoBehaviour {
     {
         obj.localScale = new Vector3(1, 1, 1);
         obj.localRotation = Quaternion.identity;
+        obj.localPosition.Set(obj.localPosition.x, obj.localPosition.y, 0);
+        obj.transform.localPosition = new Vector3(obj.transform.localPosition.x, obj.transform.localPosition.y, 0);
     }
 
-    private static void internalEventHandler(Button btn, InputField txt, bool yes, Text initText, string varName, DataType varType, Func<ButtonPressedEvent, bool> handler)
+    private static void internalEventHandler(ElementGroup group, bool yes, string varName, DataType varType, Func<ButtonPressedEvent, bool> handler)
     {
         var ret = new ButtonPressedEvent()
         {
-           Value = (txt != null) ? txt.text : null,
-           Sender = btn,
-           Textbar = txt,
-           InitialText = initText,
+           Value = (group.InputField != null) ? group.InputField.text : null,
+           ComponentGroup = group,
            VariableName = varName,
            VariableType = varType,
            SystemTime = DateTime.Now,
@@ -208,7 +218,7 @@ public class TaskEntryManager : MonoBehaviour {
 
         if (handler(ret))
         {
-            initText.color = new Color(initText.color.r, initText.color.g, initText.color.b, 0.5f);
+            group.VisibleText.color = new Color(group.VisibleText.color.r, group.VisibleText.color.g, group.VisibleText.color.b, 0.5f);
 
         }
 }
@@ -219,10 +229,7 @@ public class TaskEntryManager : MonoBehaviour {
     public class ButtonPressedEvent : EventArgs
     {
         public object Value;
-        public Button Sender;
-        public InputField Textbar;
-        public Component[] ComponentGroup;
-        public Text InitialText;
+        public ElementGroup ComponentGroup;
         public string VariableName;
         public DataType VariableType;
         public DateTime SystemTime;

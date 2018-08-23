@@ -22,6 +22,7 @@ public class AssessmentWatchValue : IAssessmentValue {
             if (line.Trim() == "")
                 continue;
 
+
             Property prop = new Property(line);
             string[] parts = line.Split('.');
             string ComponentName = parts[0];
