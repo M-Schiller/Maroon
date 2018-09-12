@@ -54,7 +54,7 @@ public class GuiPendulum : MonoBehaviour {
                             clr = new Color(0, 1, 0);
                             break;
                         case ColorCode.Mistake:
-                            clr = new Color(1, 0, 0);
+                            clr = new Color(1, 1, 0);
                             break;
                     }
 
@@ -68,15 +68,12 @@ public class GuiPendulum : MonoBehaviour {
     }
     private void defaultText()
     {
-        InfoText.text = GamificationManager
-            .instance.l_manager
-            .GetString("Info Pendulum")
-            .Replace("NEWLINE ", "\n");
-        InfoText.color = new Color(1,1,1);
+        InfoText.gameObject.transform.parent.gameObject.SetActive(false);
     }
 
     private void customText(string text, Color color )
     {
+        InfoText.gameObject.transform.parent.gameObject.SetActive(true);
         InfoText.text = text;
         InfoText.color = color;
     }
@@ -85,19 +82,19 @@ public class GuiPendulum : MonoBehaviour {
     {
         if (feedback.Length == 0)
             return;
-
-       
-
+        
         foreach (var fb in feedback)
         {
             if(fb.IsQuestion)
             {
                 var args = new TaskEntryManager.AddElementArguments() {
-                    VariableName = fb.VariableName,
-                    VariableType = fb.VariableType,
+                    Inputs = fb.Inputs,
                     Text = fb.Text,
                     SendHandler = ButtonSendPressed,
                 };
+
+                
+
                 Instance.TEM.AddElement(args);
             } else
             {
@@ -120,19 +117,23 @@ public class GuiPendulum : MonoBehaviour {
 
     public static void ShowText(FeedbackEntry feedbackEntry)
     {
-        var fb = new Evaluation.UnityInterface.Feedback();
-        fb.Item = new TextFeedbackContent();
-        fb.Item.Text = feedbackEntry.Text;
-        fb.Item.Code = feedbackEntry.ColorCode;
+        var fb = new Evaluation.UnityInterface.Feedback {
+            Item = new TextFeedbackContent {
+                Text = feedbackEntry.Text,
+                Code = feedbackEntry.ColorCode
+            }
+        };
         ShowText(fb);
     }
 
     public static void ShowText(string[] text)
     {
-        var fb = new Evaluation.UnityInterface.Feedback();
-        fb.Item = new TextFeedbackContent();
-        fb.Item.Text = String.Join(", ", text).Trim();
-        fb.Item.Code = ColorCode.Hint;
+        var fb = new Evaluation.UnityInterface.Feedback {
+            Item = new TextFeedbackContent {
+                Text = String.Join(", ", text).Trim(),
+                Code = ColorCode.Hint
+            }
+        };
         ShowText(fb);
     }
 
@@ -145,7 +146,7 @@ public class GuiPendulum : MonoBehaviour {
 
     public static bool isFocused()
     {
-        return Instance.TEM.Elements.Where(e => e.InputField &&  e.InputField.isFocused).FirstOrDefault() != null;
+        return Instance.TEM.Elements.Where(e => e.InputFields.Count > 0 &&  e.InputFields.Where(i => i.GUIField.isFocused).FirstOrDefault() != null).FirstOrDefault() != null;
     }
     
     public static void Clear()
@@ -156,59 +157,74 @@ public class GuiPendulum : MonoBehaviour {
 
     private static bool ButtonSendPressed(TaskEntryManager.ButtonPressedEvent evt)
     {
-        object value = null;
+        var msg = GameEventBuilder.AnswerQuestion(evt.Sender.VariableName, GetRealValue(evt.Sender.Text, evt.Sender.VariableType));
+        foreach(var inp in evt.ComponentGroup.InputFields)
+        {
+            var val = GetRealValue(inp.GUIField.text, inp.FBField.VariableType);
+            msg.Add(
+                GameEventBuilder.AnswerQuestion(inp.FBField.VariableName, val)
+            );
+        }
 
-        switch (evt.VariableType)
+        foreach (var inp in evt.ComponentGroup.DropDowns)
+        {
+            var val = GetRealValue(inp.GUIDropdown.options[inp.GUIDropdown.value].text, inp.FBDropdown.VariableType);
+            msg.Add(
+                GameEventBuilder.AnswerQuestion(inp.FBDropdown.VariableName, val)
+            );
+        }
+
+        Send(msg);
+        return true;
+    }
+
+    private static object GetRealValue(string value, DataType type )
+    {
+        object ret = value;
+
+        switch (type)
         {
             case DataType.Float:
                 double dbl;
-                if (!double.TryParse(evt.Value.ToString(), out dbl))
-                {
-                    Debug.Log(string.Format("Could not parse {0} to double, falling back to string", evt.Value.ToString()));
-                    value = evt.Value.ToString();
-                } else
-                    value = dbl;
+                if (!double.TryParse(value, out dbl))
+                    Debug.Log(string.Format("Could not parse {0} to double, falling back to string", value.ToString()));
+                else
+                    ret = dbl;
                 break;
 
             case DataType.Integer:
                 int i;
-                if (!int.TryParse(evt.Value.ToString(), out i))
-                {
-                    Debug.Log(string.Format("Could not parse {0} to integer, falling back to string", evt.Value.ToString()));
-                    value = evt.Value.ToString();
-                } else
-                    value = i;
+                if (!int.TryParse(value, out i))
+                    Debug.Log(string.Format("Could not parse {0} to integer, falling back to string", value.ToString()));
+                else
+                    ret = i;
 
                 break;
 
             case DataType.Boolean:
-                value = (bool)evt.Value;
+                bool res;
+                if (!Boolean.TryParse(value, out res))
+                    Debug.Log(string.Format("Could not parse {0} to boolean, falling back to string", value.ToString()));
+                else
+                    ret = res;
                 break;
-
-            default:
-                value = evt.Value.ToString();
-                break;
-
         }
 
-        Send(evt.VariableName, value);
-        return true;
-
+        return ret;
     }
-
 
     private static void Send<T>(string name, T value)
     {
-        var fb = AssessmentManager.Instance.Send(
-            GameEventBuilder.AnswerQuestion(name, value)
-        ).Feedback;
+        Send(GameEventBuilder.AnswerQuestion(name, value));   
+    }
 
+    private static void Send(Evaluation.UnityInterface.GameEvent Message)
+    {
+        var fb = AssessmentManager.Instance.Send(Message).Feedback;
         ShowFeedback(fb);
-
+        
         if (fb.Where(f => !f.IsQuestion && f.Text == "Congratulations! You finished the test!").FirstOrDefault() != null)
             PendulumManager.ExitExperiment();
-        
-            
     }
 
 }

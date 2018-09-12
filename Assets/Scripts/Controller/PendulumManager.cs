@@ -61,6 +61,7 @@ public class PendulumManager : MonoBehaviour
     {
 
         HingeJoint joint = PendulumWeight.GetComponent<HingeJoint>();
+        joint.GetComponent<Rigidbody>().WakeUp();
 
         if (Input.GetMouseButtonUp(0) && mouseDown)
         {

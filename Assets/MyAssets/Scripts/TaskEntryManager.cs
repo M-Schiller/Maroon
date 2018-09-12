@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Evaluation.UnityInterface.EWS;
+using Evaluation.UnityInterface;
+
 public class TaskEntryManager : MonoBehaviour {
 
     private GameObject TaskEntryPrefab_text;
     private GameObject TaskEntryPrefab_inp;
     private GameObject TaskEntryPrefab_btn;
+    private GameObject TaskEntryPrefab_dd;
 
     private GameObject Trash;
 
@@ -18,7 +21,8 @@ public class TaskEntryManager : MonoBehaviour {
     
     private RectTransform Canvas;
     private RectTransform Content;
-    private RectTransform Panel;
+    private RectTransform MainPanel;
+    private RectTransform RowPanel;
 
     private float visibleY;
 
@@ -28,15 +32,17 @@ public class TaskEntryManager : MonoBehaviour {
     {
         Canvas = transform as RectTransform;
         Content = Canvas.Find("Scroll View").Find("Viewport").Find("Content") as RectTransform;
-        Panel = Content.Find("Panel") as RectTransform;
+        MainPanel = Content.Find("Panel") as RectTransform;
         Trash = Content.Find("Trash").gameObject;
 
         TaskEntryPrefab_text = Content.Find("TaskEntryPrefab").Find("Text").gameObject;
         TaskEntryPrefab_inp = Content.Find("TaskEntryPrefab").Find("InputField").gameObject;
         TaskEntryPrefab_btn = Content.Find("TaskEntryPrefab").Find("Button").gameObject;
+        TaskEntryPrefab_dd = Content.Find("TaskEntryPrefab").Find("Dropdown").gameObject;
+        RowPanel = Content.Find("TaskEntryPrefab").Find("Panel") as RectTransform;
 
 
-        if (TaskEntryPrefab_text == null || TaskEntryPrefab_inp == null || TaskEntryPrefab_btn == null )
+        if (TaskEntryPrefab_text == null || TaskEntryPrefab_inp == null || TaskEntryPrefab_btn == null || TaskEntryPrefab_dd == null)
             throw new Exception("Task Entry Prefab must be provided to ensure full functionallity of the Assignment Sheet");
     }
 
@@ -44,31 +50,20 @@ public class TaskEntryManager : MonoBehaviour {
     void Start() {
         updateHeight();
         visibleY = transform.localPosition.y;
-        Hide();
     }
 	
 	// Update is called once per frame
 	void Update () {
 		
 	}
-
-    private void Hide()
-    {
-        //don't have a better solutiuon, so i will just push it through the roof
-        transform.localPosition.Set(transform.localPosition.x, transform.localPosition.y + 10000, transform.localPosition.z);
-    }
-    private void Show()
-    {
-        //don't have a better solutiuon, so i will just push it through the roof
-        transform.localPosition.Set(transform.localPosition.x, visibleY, transform.localPosition.z);
-    }
+    
     private void updateHeight()
     {
         //init the contentHeight or set at least 
         float contentHeight = 0;
 
-        var vlg = Panel.GetComponent<VerticalLayoutGroup>();
-        Panel.GetComponent<ContentSizeFitter>().enabled = false;
+        var vlg = MainPanel.GetComponent<VerticalLayoutGroup>();
+        MainPanel.GetComponent<ContentSizeFitter>().enabled = false;
 
         var check = new List<object> ();
         foreach (Text text in GetComponentsInChildren<Text>())
@@ -90,11 +85,12 @@ public class TaskEntryManager : MonoBehaviour {
                 {
                     check.Add(text);
                     contentHeight += text.preferredHeight + 5; // add some for the border of the Input field
-                    text.rectTransform.sizeDelta = new Vector2(text.rectTransform.rect.width, text.preferredHeight + 5);
+                    if (text.gameObject.name != "Label")
+                        text.rectTransform.sizeDelta = new Vector2(text.rectTransform.rect.width, text.preferredHeight + 5);
                 }
         }
 
-        contentHeight += Panel.childCount * vlg.padding.top;//these are the paddings per children
+        contentHeight += MainPanel.childCount * vlg.padding.top;//these are the paddings per children
         Content.sizeDelta = new Vector2(Content.rect.width, contentHeight);
         Content.offsetMax = new Vector2(0, Content.offsetMax.y);
     }
@@ -107,85 +103,110 @@ public class TaskEntryManager : MonoBehaviour {
 
         var group = new ElementGroup();
         var text = Instantiate(TaskEntryPrefab_text);
-        text.transform.SetParent(Panel);
+        text.transform.SetParent(MainPanel, false);
         group.VisibleText = text.GetComponent<Text>();
         group.VisibleText.text = args.Text;
-        SetCorrectRotationAndScale(text.transform as RectTransform);
 
-        if (args.VariableName != null)
+        foreach (var row in args.Inputs)
         {
-            if(args.VariableType == DataType.Boolean)
-            {
-                var btn = Instantiate(TaskEntryPrefab_btn);
-                var btn2 = Instantiate(TaskEntryPrefab_btn);
-                btn.transform.SetParent(Panel);
-                btn2.transform.SetParent(Panel);
+            var Panel = Instantiate(RowPanel);
+            Panel.SetParent(MainPanel, false);
 
-                group.Button1 = btn.GetComponent<Button>();
-                group.Button2 = btn2.GetComponent<Button>();
+            foreach (var inp in row)
+                if (inp is FeedbackButton)
+                {
+                    var btn = Instantiate(TaskEntryPrefab_btn);
+                    btn.transform.SetParent(Panel, false);
+                    group.Buttons.Add(new InpButton() {
+                        GUIButton = btn.GetComponent<Button>(),
+                        FBButton = inp as FeedbackButton
+                    });
+                    btn.transform.Find("Text").GetComponent<Text>().text = inp.Text;
+                    btn.GetComponent<Button>().onClick.AddListener(delegate {
+                        internalEventHandler(
+                            inp,
+                            group,
+                            inp.DefaultValue,
+                            args.SendHandler
+                        );
+                    });
 
-                btn.transform.Find("Text").GetComponent<Text>().text = "Yes";
-                SetCorrectRotationAndScale(btn.transform as RectTransform);
-                btn.GetComponent<Button>().onClick.AddListener(delegate {
-                    internalEventHandler(
-                        group,
-                        true,
-                        args.VariableName,
-                        args.VariableType,
-                        args.SendHandler
+                    Panel.rect.Set(
+                        Panel.rect.x,
+                        Panel.rect.y,
+                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x,
+                        Math.Max(MainPanel.rect.height, (btn.transform as RectTransform).rect.height)
                     );
-                });
 
-                btn2.transform.Find("Text").GetComponent<Text>().text = "No";
-                SetCorrectRotationAndScale(btn2.transform as RectTransform);
-                btn2.GetComponent<Button>().onClick.AddListener(delegate {
-                    internalEventHandler(
-                        group,
-                        false,
-                        args.VariableName,
-                        args.VariableType,
-                        args.SendHandler
+                    var rectTrans = (btn.transform as RectTransform);
+                    Debug.Log((Canvas.Find("Scroll View").transform as RectTransform).sizeDelta);
+
+                    rectTrans.sizeDelta = new Vector2(
+                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count,
+                        rectTrans.rect.height
                     );
-                });
-            } else
-            {
-                var inp = Instantiate(TaskEntryPrefab_inp);
-                var btn = Instantiate(TaskEntryPrefab_btn);
-                inp.transform.SetParent(Panel);
-                btn.transform.SetParent(Panel);
-                SetCorrectRotationAndScale(inp.transform as RectTransform);
-                SetCorrectRotationAndScale(btn.transform as RectTransform);
+                } else if (inp is FeedbackDropDown)
+                {
+                    var dd = Instantiate(TaskEntryPrefab_dd);
+                    dd.transform.SetParent(Panel, false);
 
-                group.Button1 = btn.GetComponent<Button>();
-                group.InputField = inp.GetComponent<InputField>();
+                    var dropd = dd.GetComponent<Dropdown>();
+                    group.DropDowns.Add(new  InpDropdown() {
+                        GUIDropdown = dropd,
+                        FBDropdown = inp as FeedbackDropDown
+                    });
 
-                btn.GetComponent<Button>().onClick.AddListener(delegate {
-                    internalEventHandler(
-                        group,
-                        false,
-                        args.VariableName,
-                        args.VariableType,
-                        args.SendHandler 
+                    dropd.ClearOptions();
+                    dropd.AddOptions((inp as FeedbackDropDown).Values);
+                    dropd.value = dropd.options.FindIndex((i) => i.text == inp.DefaultValue);
+                    var rect = (dd.transform as RectTransform).rect;
+                    (dd.transform as RectTransform).sizeDelta = new Vector2(
+                        Math.Min(
+                            Math.Max(
+                                rect.width, dd.transform.Find("Label").GetComponent<Text>().preferredWidth
+                            ),
+
+                            (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count
+                        ), 
+                        rect.height
                     );
-                });
-            }
+                } else
+                {
+                    var inpfield = Instantiate(TaskEntryPrefab_inp);
+                    inpfield.transform.SetParent(Panel, false);
+                    var input = inpfield.GetComponent<InputField>();
+                    group.InputFields.Add(new InpInputField() {
+                         GUIField = input,
+                         FBField = inp as FeedbackInputField
+                    });
+
+                    input.text = inp.DefaultValue;
+                    input.placeholder.GetComponent<Text>().text = inp.Text;
+
+                    var rectTrans = inpfield.transform as RectTransform;
+
+                    rectTrans.sizeDelta = new Vector2(
+
+                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count,
+                        rectTrans.rect.height
+                    );
+                }
         }
-
+        
         Elements.Add(group);
 
         updateHeight();
-        Show();
     }
 
     public void Clear()
     {
         Trash.SetActive(false);
 
-        foreach (Transform tr in Panel)
+        foreach (Transform tr in MainPanel)
             tr.SetParent( Trash.transform);
 
         //some f*** buttons stays behind and no one knows why...
-        foreach (Transform tr in Panel)
+        foreach (Transform tr in MainPanel)
             tr.SetParent(Trash.transform);
 
         updateHeight();
@@ -199,28 +220,20 @@ public class TaskEntryManager : MonoBehaviour {
         obj.transform.localPosition = new Vector3(obj.transform.localPosition.x, obj.transform.localPosition.y, 0);
     }
 
-    private static void internalEventHandler(ElementGroup group, bool yes, string varName, DataType varType, Func<ButtonPressedEvent, bool> handler)
+    private static void internalEventHandler(FeedbackInput sender, ElementGroup group, object value, Func<ButtonPressedEvent, bool> handler)
     {
         var ret = new ButtonPressedEvent()
         {
-           Value = (group.InputField != null) ? group.InputField.text : null,
-           ComponentGroup = group,
-           VariableName = varName,
-           VariableType = varType,
-           SystemTime = DateTime.Now,
-           UnityTime = new Time()
+            Sender = sender,
+            Value = value,
+            ComponentGroup = group,
+            SystemTime = DateTime.Now,
+            UnityTime = new Time()
         };
         
-
-        if (ret.Value == null)
-            ret.Value = yes;
-
-
+        
         if (handler(ret))
-        {
             group.VisibleText.color = new Color(group.VisibleText.color.r, group.VisibleText.color.g, group.VisibleText.color.b, 0.5f);
-
-        }
 }
 
 
@@ -228,18 +241,16 @@ public class TaskEntryManager : MonoBehaviour {
 
     public class ButtonPressedEvent : EventArgs
     {
+        public FeedbackInput Sender;
         public object Value;
         public ElementGroup ComponentGroup;
-        public string VariableName;
-        public DataType VariableType;
         public DateTime SystemTime;
         public Time UnityTime;
     }
     public class AddElementArguments
     {
         public string Text { get; set; }
-        public string VariableName { get; set; }
-        public DataType VariableType { get; set; }
+        public List<List<FeedbackInput>> Inputs { get; set; } 
         public Func<ButtonPressedEvent, bool> SendHandler { get; set; }
 
         public void CheckConsistency()
@@ -248,21 +259,59 @@ public class TaskEntryManager : MonoBehaviour {
 
             if (isEmpty(Text))
                 throw new ArgumentNullException("Text is mandatory");
+            for(int r = 0; r < Inputs.Count; r++)
+                for(int i = 0; i  < Inputs[r].Count; i++)
+                { 
+                    if (!isEmpty(Inputs[r][i].VariableName) && isEmpty(Inputs[r][i].VariableType))
+                        throw new ArgumentNullException(
+                            String.Format(
+                                "If a VariableName is provided, VariableType is mandatory (Row {0}, element {1})",
+                                r, 
+                                i
+                            )
+                        );
 
-            if (!isEmpty(VariableName) && isEmpty(VariableType))
-                throw new ArgumentNullException("If a VariableName is provided, VariableType is mandatory");
+                    if (!isEmpty(Inputs[r][i].VariableType) && isEmpty(SendHandler))
+                        throw new ArgumentNullException(
+                            String.Format(
+                                "If a VariableName and VariableType is given, a SendHandler must be provided (Row {0}, element {1})",
+                                r,
+                                i
+                            )
+                        );
+                }
+        }
 
-            if (!isEmpty(VariableType) && isEmpty(SendHandler))
-                throw new ArgumentNullException("If a VariableName and VariableType is given, a SendHandler must be provided");
-
+        public AddElementArguments()
+        {
+            Inputs = new List<List<FeedbackInput>>();
         }
     }
 
     public class ElementGroup
     {
         public Text VisibleText;
-        public InputField InputField;
-        public Button Button1;
-        public Button Button2;
+        public List<InpButton> Buttons = new List<InpButton>();
+        public List<InpInputField> InputFields = new List<InpInputField>();
+        public List<InpDropdown> DropDowns = new List<InpDropdown>();
+
+
+    }
+
+    public class InpButton
+    {
+        public Button GUIButton;
+        public FeedbackButton FBButton;
+    }
+
+    public class InpInputField
+    {
+        public InputField GUIField;
+        public FeedbackInputField FBField;
+    }
+    public class InpDropdown
+    {
+        public Dropdown GUIDropdown;
+        public FeedbackDropDown FBDropdown;
     }
 }
