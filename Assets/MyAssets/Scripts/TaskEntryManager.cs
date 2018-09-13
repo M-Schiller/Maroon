@@ -11,6 +11,7 @@ public class TaskEntryManager : MonoBehaviour {
     private GameObject TaskEntryPrefab_text;
     private GameObject TaskEntryPrefab_inp;
     private GameObject TaskEntryPrefab_btn;
+    private GameObject TaskEntryPrefab_tgl;
     private GameObject TaskEntryPrefab_dd;
 
     private GameObject Trash;
@@ -38,11 +39,16 @@ public class TaskEntryManager : MonoBehaviour {
         TaskEntryPrefab_text = Content.Find("TaskEntryPrefab").Find("Text").gameObject;
         TaskEntryPrefab_inp = Content.Find("TaskEntryPrefab").Find("InputField").gameObject;
         TaskEntryPrefab_btn = Content.Find("TaskEntryPrefab").Find("Button").gameObject;
+        TaskEntryPrefab_tgl = Content.Find("TaskEntryPrefab").Find("Toggle").gameObject;
         TaskEntryPrefab_dd = Content.Find("TaskEntryPrefab").Find("Dropdown").gameObject;
         RowPanel = Content.Find("TaskEntryPrefab").Find("Panel") as RectTransform;
 
 
-        if (TaskEntryPrefab_text == null || TaskEntryPrefab_inp == null || TaskEntryPrefab_btn == null || TaskEntryPrefab_dd == null)
+        if (TaskEntryPrefab_text == null 
+            || TaskEntryPrefab_inp == null 
+            || TaskEntryPrefab_btn == null 
+            || TaskEntryPrefab_dd == null 
+            || TaskEntryPrefab_tgl == null)
             throw new Exception("Task Entry Prefab must be provided to ensure full functionallity of the Assignment Sheet");
     }
 
@@ -85,7 +91,7 @@ public class TaskEntryManager : MonoBehaviour {
                 {
                     check.Add(text);
                     contentHeight += text.preferredHeight + 5; // add some for the border of the Input field
-                    if (text.gameObject.name != "Label")
+                    if (text.gameObject.name != "Label") // destroys the label, if the resize is done on that too
                         text.rectTransform.sizeDelta = new Vector2(text.rectTransform.rect.width, text.preferredHeight + 5);
                 }
         }
@@ -116,11 +122,11 @@ public class TaskEntryManager : MonoBehaviour {
                 if (inp is FeedbackButton)
                 {
                     var btn = Instantiate(TaskEntryPrefab_btn);
-                    btn.transform.SetParent(Panel, false);
                     group.Buttons.Add(new InpButton() {
                         GUIButton = btn.GetComponent<Button>(),
                         FBButton = inp as FeedbackButton
                     });
+
                     btn.transform.Find("Text").GetComponent<Text>().text = inp.Text;
                     btn.GetComponent<Button>().onClick.AddListener(delegate {
                         internalEventHandler(
@@ -131,25 +137,25 @@ public class TaskEntryManager : MonoBehaviour {
                         );
                     });
 
-                    Panel.rect.Set(
-                        Panel.rect.x,
-                        Panel.rect.y,
-                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x,
-                        Math.Max(MainPanel.rect.height, (btn.transform as RectTransform).rect.height)
-                    );
+                    PlaceInputField(btn, Panel, row.Count);
+                } else if (inp is FeedbackToggle)
+                {
+                    var tgl = Instantiate(TaskEntryPrefab_tgl);
+                    var guitgl = tgl.GetComponent<Toggle>();
+                    group.Toggles.Add(new InpToggle() {
+                        GUIToggle = guitgl,
+                        FBToggle = inp as FeedbackToggle
+                    });
 
-                    var rectTrans = (btn.transform as RectTransform);
-                    Debug.Log((Canvas.Find("Scroll View").transform as RectTransform).sizeDelta);
+                    bool defaultVal = false;
+                    bool.TryParse(inp.DefaultValue, out defaultVal);
+                    guitgl.isOn = defaultVal;
 
-                    rectTrans.sizeDelta = new Vector2(
-                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count,
-                        rectTrans.rect.height
-                    );
-                } else if (inp is FeedbackDropDown)
+                    tgl.transform.Find("Label").GetComponent<Text>().text = inp.Text;
+                    PlaceInputField(tgl, Panel, row.Count);
+                } else if(inp is FeedbackDropDown)
                 {
                     var dd = Instantiate(TaskEntryPrefab_dd);
-                    dd.transform.SetParent(Panel, false);
-
                     var dropd = dd.GetComponent<Dropdown>();
                     group.DropDowns.Add(new  InpDropdown() {
                         GUIDropdown = dropd,
@@ -159,21 +165,11 @@ public class TaskEntryManager : MonoBehaviour {
                     dropd.ClearOptions();
                     dropd.AddOptions((inp as FeedbackDropDown).Values);
                     dropd.value = dropd.options.FindIndex((i) => i.text == inp.DefaultValue);
-                    var rect = (dd.transform as RectTransform).rect;
-                    (dd.transform as RectTransform).sizeDelta = new Vector2(
-                        Math.Min(
-                            Math.Max(
-                                rect.width, dd.transform.Find("Label").GetComponent<Text>().preferredWidth
-                            ),
 
-                            (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count
-                        ), 
-                        rect.height
-                    );
+                    PlaceInputField(dd, Panel, row.Count);
                 } else
                 {
                     var inpfield = Instantiate(TaskEntryPrefab_inp);
-                    inpfield.transform.SetParent(Panel, false);
                     var input = inpfield.GetComponent<InputField>();
                     group.InputFields.Add(new InpInputField() {
                          GUIField = input,
@@ -183,19 +179,32 @@ public class TaskEntryManager : MonoBehaviour {
                     input.text = inp.DefaultValue;
                     input.placeholder.GetComponent<Text>().text = inp.Text;
 
-                    var rectTrans = inpfield.transform as RectTransform;
-
-                    rectTrans.sizeDelta = new Vector2(
-
-                        (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / row.Count,
-                        rectTrans.rect.height
-                    );
+                    PlaceInputField(inpfield, Panel, row.Count);
                 }
         }
         
         Elements.Add(group);
 
         updateHeight();
+    }
+
+    private void PlaceInputField(GameObject inp, RectTransform Panel, int nrOfElementsInRow)
+    {
+        inp.transform.SetParent(Panel, false);
+        var input = inp.GetComponent<InputField>();
+        var rectTrans = inp.transform as RectTransform;
+
+        rectTrans.sizeDelta = new Vector2(
+            (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x / nrOfElementsInRow,
+            rectTrans.rect.height
+        );
+
+        Panel.rect.Set(
+            Panel.rect.x,
+            Panel.rect.y,
+            (Canvas.Find("Scroll View").transform as RectTransform).sizeDelta.x,
+            Math.Max(MainPanel.rect.height, (inp.transform as RectTransform).rect.height)
+        );
     }
 
     public void Clear()
@@ -294,6 +303,7 @@ public class TaskEntryManager : MonoBehaviour {
         public List<InpButton> Buttons = new List<InpButton>();
         public List<InpInputField> InputFields = new List<InpInputField>();
         public List<InpDropdown> DropDowns = new List<InpDropdown>();
+        public List<InpToggle> Toggles = new List<InpToggle>();
 
 
     }
@@ -313,5 +323,11 @@ public class TaskEntryManager : MonoBehaviour {
     {
         public Dropdown GUIDropdown;
         public FeedbackDropDown FBDropdown;
+    }
+
+    public class InpToggle
+    {
+        public Toggle GUIToggle;
+        public FeedbackToggle FBToggle;
     }
 }

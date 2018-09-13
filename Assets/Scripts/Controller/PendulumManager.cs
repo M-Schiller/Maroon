@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Evaluation.UnityInterface;
+using UnityEngine.UI;
 
 /// <summary>
 /// Controller class to manage the field lines
@@ -21,6 +22,8 @@ public class PendulumManager : MonoBehaviour
     private GameObject InfoTextPanel;
     [SerializeField]
     private GameObject SlowMoObject;
+    [SerializeField]
+    private GameObject AngleTextField;
 
     public float ropeLength = 0.3f;
     public float weight = 1.0f;
@@ -135,9 +138,10 @@ public class PendulumManager : MonoBehaviour
         checkKeyboardInput();
         assertPosition();
 
-        drawRope();
+        drawRopeAndAngle();
         adjustWeight();
         setText();
+
 
     }
 
@@ -265,11 +269,22 @@ public class PendulumManager : MonoBehaviour
         PendulumWeight.GetComponent<Rigidbody>().mass = weight;
 
     }
-    private void drawRope()
+    private void drawRopeAndAngle()
     {
         var startPos = PendulumWeight.transform.Find("weight_obj").transform.position;
         startPos.Set(startPos.x, startPos.y, startPos.z);
         DrawLine(startPos, StandRopeJoint.transform.position, new Color(0, 0, 0));
+
+        if (!AngleTextField)
+            return;
+
+        var text = AngleTextField.GetComponent<Text>();
+        if (!text)
+            throw new Exception(String.Format("The given text field ({0}) does not contain a text component", AngleTextField.name));
+
+        var x = transform.localEulerAngles.x;
+        x = x < 180 ? x : x - 360;
+        text.text = Math.Round(x, 1).ToString() + "°";
     }
 
     void setRopeLengthRelative(float value)

@@ -174,6 +174,14 @@ public class GuiPendulum : MonoBehaviour {
             );
         }
 
+        foreach (var inp in evt.ComponentGroup.Toggles)
+        {
+            var val = GetRealValue(inp.GUIToggle.isOn.ToString(), inp.FBToggle.VariableType);
+            msg.Add(
+                GameEventBuilder.AnswerQuestion(inp.FBToggle.VariableName, val)
+            );
+        }
+
         Send(msg);
         return true;
     }
