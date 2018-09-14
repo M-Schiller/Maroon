@@ -235,7 +235,6 @@ public class PendulumManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             Stopwatch.SendMessage("SWStop");
-
         }
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -255,21 +254,11 @@ public class PendulumManager : MonoBehaviour
             return;
 
         var ge = GameEventBuilder
-            .EnvironmentVariable(name, "calculated_frequency", evt.CurrentNumber)
-            .Add(GameEventBuilder.UseObject("operation", "submit-frequency"));
+            .EnvironmentVariable(name, "calculated_value", evt.CurrentNumber)
+            .Add(GameEventBuilder.UseObject("operation", "submit-value"));
 
         var res = AssessmentManager.Instance.Send(ge);
         GuiPendulum.ShowFeedback(res.Feedback);
-
-        if(res.Feedback.Length > 0)
-            if(res.Feedback.Where(e => e.ColorCode == Evaluation.UnityInterface.EWS.ColorCode.Success).FirstOrDefault() != null)
-            {
-                GuiPendulum.Clear();
-                var res2 = AssessmentManager.Instance.Send(GameEventBuilder.EnterSection("pendulum_maroon_2"));
-                GuiPendulum.ShowFeedback(res2.Feedback);
-            }
-
-        
     }
 
     private void StopWatchStart(StopWatch.StopWatchEvent evt)

@@ -45,6 +45,8 @@ public class StopWatch : MonoBehaviour {
     public double Elapsed {  get {
             if (isReset)
                 return 0;
+            if (!isRunning)
+                startTime = Time.time - lastElapsed;
 
             return Time.time - startTime;
         }

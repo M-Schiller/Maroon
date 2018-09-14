@@ -9,7 +9,7 @@ using Evaluation.UnityInterface.EWS;
 public class GuiPendulum : MonoBehaviour {
 
     public float MinimumTimeTextIsVisible = 1f;
-    public float MaximumTimeTextIsVisible = 5f;
+    public float MaximumTimeTextIsVisible = 10f;
 
     [SerializeField]
     private Text InfoText = null;
@@ -92,12 +92,11 @@ public class GuiPendulum : MonoBehaviour {
                 if (fb.Text.ToLower() == "clear")
                     Clear();
                 else if (fb.Text.ToLower().StartsWith("entersection"))
-                {
-                    Debug.Log("is enter section: " + fb.Text.Split(':')[1]) ;
                     ShowFeedback(Send(
                         GameEventBuilder.EnterSection(fb.Text.Split(':')[1])
                     ));
-                }
+                else if (fb.Text.ToLower() == "cleartext")
+                    Instance.defaultText();
             } else 
                 if(fb.IsQuestion)
                 {
