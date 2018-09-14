@@ -98,9 +98,23 @@ public class PendulumManager : MonoBehaviour
                     } else if (hit.transform.name == SlowMoObject.name)
                     {
                         if (slow)
+                        {
                             Time.timeScale = 1.0f;
+                            GuiPendulum.ShowFeedback(
+                                AssessmentManager.Instance.Send(
+                                    GameEventBuilder.UseObject("timelaps", "deactivate")
+                                ).Feedback
+                            );
+                        }
                         else
+                        {
                             Time.timeScale = 0.2f;
+                            GuiPendulum.ShowFeedback(
+                                AssessmentManager.Instance.Send(
+                                    GameEventBuilder.UseObject("timelaps", "activate")
+                                ).Feedback
+                            );
+                        }
 
                         Time.fixedDeltaTime = 0.02F * Time.timeScale;
                         slow = !slow;
@@ -198,10 +212,21 @@ public class PendulumManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A))
         {
             weight -= weightChangeStepSize;
+            GuiPendulum.ShowFeedback(
+                AssessmentManager.Instance.Send(
+                    GameEventBuilder.UseObject("pendulum_weight", "decrease")
+                ).Feedback
+            );
+
         }
         if (Input.GetKeyDown(KeyCode.D))
         {
             weight += weightChangeStepSize;
+            GuiPendulum.ShowFeedback(
+                AssessmentManager.Instance.Send(
+                    GameEventBuilder.UseObject("pendulum_weight", "increase")
+                ).Feedback
+            );
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
@@ -300,6 +325,7 @@ public class PendulumManager : MonoBehaviour
         pos.Set(transform.position.x, transform.position.y - ropeLength, transform.position.z);
         obj.transform.position = pos;
 
+        /*
         double theoretical_freq = 1 / (2 * Math.PI) * Math.Sqrt(Physics.gravity.magnitude / ropeLength);
         var ec = GameEventBuilder.EnvironmentVariable(
             this.name,
@@ -312,8 +338,12 @@ public class PendulumManager : MonoBehaviour
                 1 / theoretical_freq
             )
         );
-
-        AssessmentManager.Instance.Send(ec);
+        */
+        AssessmentManager.Instance.Send(
+            GameEventBuilder.UseObject("ropelength", "change").Add(
+                GameEventBuilder.EnvironmentVariable(name, "Physics.gravity.magnitude", Physics.gravity.magnitude)
+            )
+        );
     }
 
 

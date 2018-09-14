@@ -27,6 +27,12 @@ public class TaskEntryManager : MonoBehaviour {
 
     private float visibleY;
 
+    private static Color SuccessColor = new Color(0, 1, 0);
+    private static Color HintColor = new Color(1, 1, 0);
+    private static Color MistakeColor = new Color(1, 0, 0);
+
+
+
     public List<ElementGroup> Elements = new List<ElementGroup>();
 
     private void Awake()
@@ -207,6 +213,9 @@ public class TaskEntryManager : MonoBehaviour {
         );
     }
 
+    /// <summary>
+    /// Clears all entries from the assignment sheet
+    /// </summary>
     public void Clear()
     {
         Trash.SetActive(false);
@@ -214,7 +223,7 @@ public class TaskEntryManager : MonoBehaviour {
         foreach (Transform tr in MainPanel)
             tr.SetParent( Trash.transform);
 
-        //some f*** buttons stays behind and no one knows why...
+        //some f***ing buttons stay behind and no one knows why...
         foreach (Transform tr in MainPanel)
             tr.SetParent(Trash.transform);
 
@@ -229,7 +238,7 @@ public class TaskEntryManager : MonoBehaviour {
         obj.transform.localPosition = new Vector3(obj.transform.localPosition.x, obj.transform.localPosition.y, 0);
     }
 
-    private static void internalEventHandler(FeedbackInput sender, ElementGroup group, object value, Func<ButtonPressedEvent, bool> handler)
+    private static void internalEventHandler(FeedbackInput sender, ElementGroup group, object value, Func<ButtonPressedEvent, ColorCode> handler)
     {
         var ret = new ButtonPressedEvent()
         {
@@ -239,10 +248,20 @@ public class TaskEntryManager : MonoBehaviour {
             SystemTime = DateTime.Now,
             UnityTime = new Time()
         };
-        
-        
-        if (handler(ret))
-            group.VisibleText.color = new Color(group.VisibleText.color.r, group.VisibleText.color.g, group.VisibleText.color.b, 0.5f);
+
+
+        switch (handler(ret))
+        {
+            case ColorCode.Success:
+                group.VisibleText.color = SuccessColor;
+                break;
+            case ColorCode.Hint:
+                group.VisibleText.color = HintColor;
+                break;
+            default:
+                group.VisibleText.color = MistakeColor;
+                break;
+        }
 }
 
 
@@ -260,7 +279,7 @@ public class TaskEntryManager : MonoBehaviour {
     {
         public string Text { get; set; }
         public List<List<FeedbackInput>> Inputs { get; set; } 
-        public Func<ButtonPressedEvent, bool> SendHandler { get; set; }
+        public Func<ButtonPressedEvent, ColorCode> SendHandler { get; set; }
 
         public void CheckConsistency()
         {

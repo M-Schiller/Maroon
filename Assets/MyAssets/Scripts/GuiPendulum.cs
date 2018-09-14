@@ -85,21 +85,35 @@ public class GuiPendulum : MonoBehaviour {
         
         foreach (var fb in feedback)
         {
-            if(fb.IsQuestion)
+            Debug.Log(fb);
+            Debug.Log(fb.Text);
+            if(fb.Type == FeedbackType.Technical)
             {
-                var args = new TaskEntryManager.AddElementArguments() {
-                    Inputs = fb.Inputs,
-                    Text = fb.Text,
-                    SendHandler = ButtonSendPressed,
-                };
-
+                if (fb.Text.ToLower() == "clear")
+                    Clear();
+                else if (fb.Text.ToLower().StartsWith("entersection"))
+                {
+                    Debug.Log("is enter section: " + fb.Text.Split(':')[1]) ;
+                    ShowFeedback(Send(
+                        GameEventBuilder.EnterSection(fb.Text.Split(':')[1])
+                    ));
+                }
+            } else 
+                if(fb.IsQuestion)
+                {
+                    var args = new TaskEntryManager.AddElementArguments() {
+                        Inputs = fb.Inputs,
+                        Text = fb.Text,
+                        SendHandler = ButtonSendPressed,
+                    };
                 
+                    Instance.TEM.AddElement(args);
+                } else
+                {
+                    ShowText(fb);
+                }
 
-                Instance.TEM.AddElement(args);
-            } else
-            {
-                ShowText(fb);
-            }
+
         }
     }
 
@@ -152,10 +166,10 @@ public class GuiPendulum : MonoBehaviour {
     public static void Clear()
     {
         Instance.defaultText();
-        Instance.AssignmentSheet.GetComponent<TaskEntryManager>().Clear();
+        Instance.TEM.Clear();
     }
 
-    private static bool ButtonSendPressed(TaskEntryManager.ButtonPressedEvent evt)
+    private static ColorCode ButtonSendPressed(TaskEntryManager.ButtonPressedEvent evt)
     {
         var msg = GameEventBuilder.AnswerQuestion(evt.Sender.VariableName, GetRealValue(evt.Sender.Text, evt.Sender.VariableType));
         foreach(var inp in evt.ComponentGroup.InputFields)
@@ -182,8 +196,11 @@ public class GuiPendulum : MonoBehaviour {
             );
         }
 
-        Send(msg);
-        return true;
+        var fb = Send(msg);
+        ShowFeedback(fb);
+
+        return fb.Any(e => e.ColorCode == ColorCode.Mistake) ? ColorCode.Mistake :
+            fb.Any(e => e.ColorCode == ColorCode.Hint) ? ColorCode.Hint : ColorCode.Success;
     }
 
     private static object GetRealValue(string value, DataType type )
@@ -221,18 +238,14 @@ public class GuiPendulum : MonoBehaviour {
         return ret;
     }
 
-    private static void Send<T>(string name, T value)
+    private static FeedbackEntry[] Send<T>(string name, T value)
     {
-        Send(GameEventBuilder.AnswerQuestion(name, value));   
+        return Send(GameEventBuilder.AnswerQuestion(name, value));   
     }
 
-    private static void Send(Evaluation.UnityInterface.GameEvent Message)
+    private static FeedbackEntry[] Send(Evaluation.UnityInterface.GameEvent Message)
     {
-        var fb = AssessmentManager.Instance.Send(Message).Feedback;
-        ShowFeedback(fb);
-        
-        if (fb.Where(f => !f.IsQuestion && f.Text == "Congratulations! You finished the test!").FirstOrDefault() != null)
-            PendulumManager.ExitExperiment();
+        return AssessmentManager.Instance.Send(Message).Feedback;        
     }
 
 }
