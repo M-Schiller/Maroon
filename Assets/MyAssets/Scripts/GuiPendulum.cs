@@ -51,7 +51,7 @@ public class GuiPendulum : MonoBehaviour {
                     Color clr = new Color(1,1,1);
                     switch(textToSet[0].Item.Code) {
                         case ColorCode.Success:
-                            clr = new Color(0, 1, 0);
+                            clr = new Color(0, 0.6f, 0);
                             break;
                         case ColorCode.Mistake:
                             clr = new Color(1, 1, 0);
@@ -90,7 +90,10 @@ public class GuiPendulum : MonoBehaviour {
             if(fb.Type == FeedbackType.Technical)
             {
                 if (fb.Text.ToLower() == "clear")
+                {
                     Clear();
+                    Clear(); //dunno why we have to do that... Unity...
+                }
                 else if (fb.Text.ToLower().StartsWith("entersection"))
                     ShowFeedback(Send(
                         GameEventBuilder.EnterSection(fb.Text.Split(':')[1])
@@ -159,7 +162,13 @@ public class GuiPendulum : MonoBehaviour {
 
     public static bool isFocused()
     {
-        return Instance.TEM.Elements.Where(e => e.InputFields.Count > 0 &&  e.InputFields.Where(i => i.GUIField.isFocused).FirstOrDefault() != null).FirstOrDefault() != null;
+        try
+        {
+            return Instance.TEM.Elements.Where(e => e.InputFields.Count > 0 && e.InputFields.Where(i => i.GUIField.isFocused).FirstOrDefault() != null).FirstOrDefault() != null;
+        }catch
+        {
+            return false;
+        }
     }
     
     public static void Clear()

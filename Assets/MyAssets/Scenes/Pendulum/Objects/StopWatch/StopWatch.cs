@@ -111,7 +111,7 @@ public class StopWatch : MonoBehaviour {
             return;
 
         var text = String.Format("{0:0.00}", number);
-        TextDisplay.GetComponent<TextMesh>().text = text.Substring(0, 4);
+        TextDisplay.GetComponent<TextMesh>().text = text.Substring(0, Math.Min(5, text.Length));
     }
 
     private void SetSecondsHand(double passedMilliseconds)

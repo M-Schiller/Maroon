@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Evaluation.UnityInterface.EWS;
 using Evaluation.UnityInterface;
+using System.Linq;
 
 public class TaskEntryManager : MonoBehaviour {
 
@@ -27,7 +28,7 @@ public class TaskEntryManager : MonoBehaviour {
 
     private float visibleY;
 
-    private static Color SuccessColor = new Color(0, 1, 0);
+    private static Color SuccessColor = new Color(0, 0.6f, 0);
     private static Color HintColor = new Color(1, 1, 0);
     private static Color MistakeColor = new Color(1, 0, 0);
 
@@ -156,6 +157,28 @@ public class TaskEntryManager : MonoBehaviour {
                     bool defaultVal = false;
                     bool.TryParse(inp.DefaultValue, out defaultVal);
                     guitgl.isOn = defaultVal;
+
+                    List<FeedbackInput> tglGroup = args.Inputs.Where(a => a.Where(b => b is FeedbackToggle).FirstOrDefault() != null).SelectMany(i => i).ToList();
+                    
+
+                    guitgl.onValueChanged.AddListener(delegate {
+                        if ((inp as FeedbackToggle).Group == "")
+                            return;
+
+                        if (!group.HandlerActive)
+                            return;
+
+                        group.HandlerActive = false;
+
+                        if (guitgl.isOn)
+                            foreach (var t in group.Toggles.Where(a => a.FBToggle.Group == (inp as FeedbackToggle).Group))
+                                t.GUIToggle.isOn = false;
+                        
+                        guitgl.isOn = true;
+                        group.HandlerActive = true;
+
+                    });
+
 
                     tgl.transform.Find("Label").GetComponent<Text>().text = inp.Text;
                     PlaceInputField(tgl, Panel, row.Count);
@@ -323,6 +346,7 @@ public class TaskEntryManager : MonoBehaviour {
         public List<InpInputField> InputFields = new List<InpInputField>();
         public List<InpDropdown> DropDowns = new List<InpDropdown>();
         public List<InpToggle> Toggles = new List<InpToggle>();
+        public Boolean HandlerActive = true;
 
 
     }

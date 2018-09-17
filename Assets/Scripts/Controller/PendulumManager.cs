@@ -35,13 +35,19 @@ public class PendulumManager : MonoBehaviour
     private Vector3 defaultPosition;
 
 
-    private float weightChangeStepSize = 0.05f;
-    private float weightMin = 1.0f;
-    private float weightMax = 2.0f;
+    [SerializeField]
+    private float WeightChangeStepSize = 0.05f;
+    [SerializeField]
+    private float WeightMin = 1.0f;
+    [SerializeField]
+    private float WeightMax = 2.0f;
 
-    private float ropeLengthChangeStepSize = 0.01f;
-    private float ropeMin = 0.1f;
-    private float ropeMax = 0.5f;
+    [SerializeField]
+    private float RopeLengthChangeStepSize = 0.01f;
+    [SerializeField]
+    private float RopeMinLength = 0.2f;
+    [SerializeField]
+    private float RopeMaxLength = 0.5f;
 
     
     /// <summary>
@@ -142,11 +148,11 @@ public class PendulumManager : MonoBehaviour
 
         if (Input.GetAxis("Mouse ScrollWheel") > 0)
         {
-            setRopeLengthRelative(ropeLengthChangeStepSize);
+            setRopeLengthRelative(RopeLengthChangeStepSize);
 
         } else if(Input.GetAxis("Mouse ScrollWheel") < 0)
         {
-            setRopeLengthRelative(-ropeLengthChangeStepSize);
+            setRopeLengthRelative(-RopeLengthChangeStepSize);
         }
 
         checkKeyboardInput();
@@ -211,7 +217,7 @@ public class PendulumManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.A))
         {
-            weight -= weightChangeStepSize;
+            weight -= WeightChangeStepSize;
             GuiPendulum.ShowFeedback(
                 AssessmentManager.Instance.Send(
                     GameEventBuilder.UseObject("pendulum_weight", "decrease")
@@ -221,7 +227,7 @@ public class PendulumManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.D))
         {
-            weight += weightChangeStepSize;
+            weight += WeightChangeStepSize;
             GuiPendulum.ShowFeedback(
                 AssessmentManager.Instance.Send(
                     GameEventBuilder.UseObject("pendulum_weight", "increase")
@@ -276,7 +282,7 @@ public class PendulumManager : MonoBehaviour
     {
         var obj = PendulumWeight.transform.Find("weight_obj/weight_gizmo");
 
-        weight = Math.Min(Math.Max(weight, weightMin), weightMax);
+        weight = Math.Min(Math.Max(weight, WeightMin), WeightMax);
         obj.transform.localScale = new Vector3(weight / 1000, weight / 1000, weight / 1000);
 
         //set the weight at the rigidbody (doesn't change anything physically, but.. you know...)
@@ -307,8 +313,8 @@ public class PendulumManager : MonoBehaviour
         Vector3 currPos = PendulumWeight.transform.position;
         var obj = PendulumWeight.transform.Find("weight_obj");
         var pos = obj.transform.position;
-        float newVal = Math.Max(-ropeMax, -ropeLength + value);
-        newVal = Math.Min(newVal, -ropeMin);
+        float newVal = Math.Max(-RopeMaxLength, -ropeLength + value);
+        newVal = Math.Min(newVal, -RopeMinLength);
         ropeLength = -newVal;
 
         pos.Set(transform.position.x, transform.position.y - ropeLength, transform.position.z);
@@ -328,10 +334,12 @@ public class PendulumManager : MonoBehaviour
             )
         );
         */
-        AssessmentManager.Instance.Send(
-            GameEventBuilder.UseObject("ropelength", "change").Add(
-                GameEventBuilder.EnvironmentVariable(name, "Physics.gravity.magnitude", Physics.gravity.magnitude)
-            )
+        GuiPendulum.ShowFeedback(
+            AssessmentManager.Instance.Send(
+                GameEventBuilder.UseObject("operation", "ropelength_change").Add(
+                    GameEventBuilder.EnvironmentVariable(name, "Physics.gravity.magnitude", Physics.gravity.magnitude)
+                )
+            ).Feedback
         );
     }
 
