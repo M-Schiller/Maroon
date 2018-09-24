@@ -8,8 +8,9 @@ using Evaluation.UnityInterface.EWS;
 
 public class GuiPendulum : MonoBehaviour {
 
-    public float MinimumTimeTextIsVisible = 1f;
-    public float MaximumTimeTextIsVisible = 10f;
+    public float MinimumTimeTextIsVisible = 3f;
+    public float SecondsPerWord = 1f;
+    private float CurrentMaxVisibleTime;
 
     [SerializeField]
     private Text InfoText = null;
@@ -34,6 +35,10 @@ public class GuiPendulum : MonoBehaviour {
 
         if (AssignmentSheet == null || TEM == null)
             throw new InvalidProgramException("The given Assignment Sheet is not valid. It must contain a TaskEntryManager component.");
+
+        InfoText.transform.parent.Find("Button").GetComponent<Button>().onClick.AddListener(delegate {
+            Instance.defaultText();
+        });
     }
 
     void Start ()
@@ -58,12 +63,12 @@ public class GuiPendulum : MonoBehaviour {
                             break;
                     }
 
-                    customText(textToSet[0].Item.Text, clr);
-                    textToSet.RemoveAt(0);
+                    CurrentMaxVisibleTime = Math.Max(customText(textToSet[0].Item.Text, clr).Split(' ').Count() * SecondsPerWord, MinimumTimeTextIsVisible);
                     lastSet = DateTime.Now;
+                    textToSet.RemoveAt(0);
                 }
         } else
-            if (lastSet.AddSeconds(MaximumTimeTextIsVisible) < DateTime.Now)
+            if (lastSet.AddSeconds(CurrentMaxVisibleTime) < DateTime.Now)
             defaultText();
     }
     private void defaultText()
@@ -71,7 +76,7 @@ public class GuiPendulum : MonoBehaviour {
         InfoText.gameObject.transform.parent.gameObject.SetActive(false);
     }
 
-    private void customText(string text, Color color)
+    private string  customText(string text, Color color)
     {
         InfoText.gameObject.transform.parent.gameObject.SetActive(true);
 
@@ -82,6 +87,7 @@ public class GuiPendulum : MonoBehaviour {
             GamificationManager.instance.l_manager.GetString(text);
 
         InfoText.color = color;
+        return InfoText.text;
     }
 
     public static void ShowFeedback(FeedbackEntry[] feedback)
