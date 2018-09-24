@@ -68,11 +68,7 @@ public class LanguageManager
     //returns the dialogue in the current language for given key if key exists
     public string GetString(string key)
     {
-        int index = FindIndex(key);
-        //If Index exists
-        if (index > -1)
-            return Translations[index].GetValue(currentLanguage);
-        return "";
+        return GetString(key, currentLanguage);
     }
     
     //returns the dialogue in the chosen language for given key if key exists
@@ -82,7 +78,7 @@ public class LanguageManager
         //If Index exists
         if (index > -1)
             return Translations[index].GetValue(language);
-        return "";
+        return key;
     }
 
     //add new dialogue in Translation list or update existing dialogue

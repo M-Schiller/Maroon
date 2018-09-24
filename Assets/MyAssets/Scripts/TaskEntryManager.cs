@@ -118,7 +118,7 @@ public class TaskEntryManager : MonoBehaviour {
         var text = Instantiate(TaskEntryPrefab_text);
         text.transform.SetParent(MainPanel, false);
         group.VisibleText = text.GetComponent<Text>();
-        group.VisibleText.text = args.Text;
+        group.VisibleText.text = GamificationManager.instance.l_manager.GetString(args.Text);
 
         foreach (var row in args.Inputs)
         {
@@ -134,7 +134,7 @@ public class TaskEntryManager : MonoBehaviour {
                         FBButton = inp as FeedbackButton
                     });
 
-                    btn.transform.Find("Text").GetComponent<Text>().text = inp.Text;
+                    btn.transform.Find("Text").GetComponent<Text>().text = GamificationManager.instance.l_manager.GetString(inp.Text);
                     btn.GetComponent<Button>().onClick.AddListener(delegate {
                         internalEventHandler(
                             inp,
@@ -180,7 +180,7 @@ public class TaskEntryManager : MonoBehaviour {
                     });
 
 
-                    tgl.transform.Find("Label").GetComponent<Text>().text = inp.Text;
+                    tgl.transform.Find("Label").GetComponent<Text>().text = GamificationManager.instance.l_manager.GetString(inp.Text);
                     PlaceInputField(tgl, Panel, row.Count);
                 } else if(inp is FeedbackDropDown)
                 {
@@ -192,7 +192,7 @@ public class TaskEntryManager : MonoBehaviour {
                     });
 
                     dropd.ClearOptions();
-                    dropd.AddOptions((inp as FeedbackDropDown).Values);
+                    dropd.AddOptions((inp as FeedbackDropDown).Values.Select(i => GamificationManager.instance.l_manager.GetString(i)).ToList());
                     dropd.value = dropd.options.FindIndex((i) => i.text == inp.DefaultValue);
 
                     PlaceInputField(dd, Panel, row.Count);
@@ -206,7 +206,7 @@ public class TaskEntryManager : MonoBehaviour {
                     });
 
                     input.text = inp.DefaultValue;
-                    input.placeholder.GetComponent<Text>().text = inp.Text;
+                    input.placeholder.GetComponent<Text>().text = GamificationManager.instance.l_manager.GetString(inp.Text);
 
                     PlaceInputField(inpfield, Panel, row.Count);
                 }

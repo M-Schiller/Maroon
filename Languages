@@ -23,6 +23,53 @@
     <Translation Key="Zelda" English="Its dangerous to go alone!" German="Es ist gefährlich, alleine zu gehen!" French="" Spain="" Italian="" />
     <Translation Key="Vandegraaf 1 Launch" English="Click here to launch the Vandegraaf Generator Experiment." German="Klicke hier, um das Vandegraaf Generator Experiment zu starten." French="" Spain="" Italian="" />
     <Translation Key="Vandegraaf 2 Launch" English="Click here to launch the Vandegraaf Ballon Experiment." German="Klicke hier, um das Vandegraaf Ballon Experiment zu starten." French="" Spain="" Italian="" />
-    <Translation Key="Headset Away" English="Dont you like my selft-created music?" German="Magst du meine selbstkreierte Musik nicht?" French="" Spain="" Italian="" />
+    <Translation Key="Headset Away" English="Don't you like my selft-created music?" German="Magst du meine selbstkreierte Musik nicht?" French="" Spain="" Italian="" />
+    
+    <Translation Key="P1 Welcome" English="Welcome at the Pendulum Experiment. Get used to the experiemt: deflect the pendulum with drag and drop." German="Willkommen beim Pendel-Experiment. Mach dich vertraut. Lenke das Pendel mittels Drag and Drop aus." French="" Spain="" Italian="" />
+    <Translation Key="P1 Ropelength" English="Well done! Now use the Mouse wheel to adjust the rope length." German="Sehr gut! Jetzt verwende das Mausrad, um die Seillänge zu verändern" French="" Spain="" Italian="" />
+    <Translation Key="P1 Weight" English="Nice! Now use 'A' and 'D' on your keyboard to adjust the mass" German="Super! Jetzt verändere die Masse mit den Tasten 'A' und 'D'" French="" Spain="" Italian="" />
+    <Translation Key="P1 Stopwatch Start" English="Perfect! Now start the stop watch by clicking on it." German="Perfekt! Jetzt zur Stoppuhr: Klicke darauf um sie zu starten." French="" Spain="" Italian="" />
+    <Translation Key="P1 Stopwatch Stop" English="Now stop it by klicking it again." German="Und jetzt stoppe sie wieder, indem du abermals darauf klickst." French="" Spain="" Italian="" />
+    <Translation Key="P1 Timelaps" English="Wow! You found the time laps function! This will come in handy during the experiment!" German="Wow! Du hast die Zeitlupe gefunden! Sie wird beim Experimentieren sehr nützlich sein!" French="" Spain="" Italian="" />
+    <Translation Key="P1 Moveon" English="Great! Click on 'Let's go' at the white board." German="Sehr gut! Klicke auf 'Los gehts!' am Whiteboard." French="" Spain="" Italian="" />
+    <Translation Key="P1 Easteregg" English="(Watch out: There is still an easter-egg hidden!)" German="(Achtung: Es gibt noch ein Easter Egg!)" French="" Spain="" Italian="" />
+    <Translation Key="Lets Go" English="Let's go!" German="Los gehts!" French="" Spain="" Italian="" />
+    
+<Translation Key="P2 Exercise" English="Exercise 1: calculate the Frequency of any pendulum
+Adjust the length and mass of the pendulum as you wish. Try to measure the period 3 times, calculate the frequency and insert your values here.
+I'm going to support you as best as I can." German="Aufgabe 1: eine Frequenz eines beliebigen Pendels zu messen/errechnen
+Stelle dazu das Pendel auf beliebige Länge und Gewicht. Versuche, 3 mal das Pendel zu messen und trage deine Ergebnisse hier ein.
+Ich werde dich so gut es geht unterstützen." French="" Spain="" Italian="" />
+    <Translation Key="P2 Ropelength" English="Length of Rope (cm)" German="Länge des Seils (cm)" French="" Spain="" Italian="" />
+    <Translation Key="P2 Weight" English="Mass (kg)" German="Masse (kg)" French="" Spain="" Italian="" />
+    <Translation Key="P2 MeasuredTime" English="Measured Time (s)" German="Gemessene Zeit (s)" French="" Spain="" Italian="" />
+    <Translation Key="P2 CalcFreq" English="Calculated Frequency (Hz)" German="Berechnete Frequenz (Hz)" French="" Spain="" Italian="" />
+    <Translation Key="Check" English="Check" German="Prüfen" French="" Spain="" Italian="" />
+    <Translation Key="P2 FarDeflected" English="Caution! The simple formula just works for deflection angles lower than 5°" German="Achtung! Die simple Formel funktioniert nur für Auslenkungen unter 5°!" French="" Spain="" Italian="" />
+    <Translation Key="P2 NoPeriod" English="Caution! This wasn't a period! Your measurement could be wrong." German="Achtung! Das war nicht ganz eine Periode! Deine Messung könnte falsch sein." French="" Spain="" Italian="" />
+    <Translation Key="P2 GoodCalc1" English="Awesome! your calculation misses the theory by a margin of" German="Sehr gut! Deine Berechnung liegt um nur" French="" Spain="" Italian="" />
+    <Translation Key="P2 GoodCalc2" English="Hz" German="Hz neben der Theorie" French="" Spain="" Italian="" />
+    <Translation Key="P2 BadCalc1" English="I'm sorry, that's not correct. Please check these things:" German="Das ist leider nicht ganz korrekt. Prüfe folgende dinge nach:" French="" Spain="" Italian="" />
+    <Translation Key="P2 MisCalc" English="you probably miscalculated," German="du hast dich wahrscheinlich verrechnet," French="" Spain="" Italian="" />
+    <Translation Key="P2 TimeMeasure" English="your time measurement is not as exactly as it should be" German="deine Zeitmessung scheint nicht genau genug zu sein," French="" Spain="" Italian="" />
+    <Translation Key="P2 WrongRopelength" English="your given rope length is not equal to the current rope length" German="deine angegebene Seillänge stimmt nicht mit der derzeitigen überein," French="" Spain="" Italian="" />
+    <Translation Key="Try Again" English="Try Again!" German="Probier's nochmal!" French="" Spain="" Italian="" />
+    <Translation Key="P2 FinalQuest" English="So what's the frequency of the pendulum?" German="Was ist also die Frequenz des Pendels?" French="" Spain="" Italian="" />
+    <Translation Key="P2 FinalOK" English="Perfect! Let's move on right away!" German="Perfekt! Machen wir gleich weiter..." French="" Spain="" Italian="" />
+    <Translation Key="P2 FinalWrong" English="Sorry, that's not correct. You have to calculate the average." German="Das ist leider nicht ganz korrekt. Du musst den Mittelwert berechnen." French="" Spain="" Italian="" />
+    
+<Translation Key="P3 Exercise" English="Exercise 2: Connection between mass/rope length and frequency
+Set the pendulum to any desired rope length and mass. Measure the time and frequency. Adjust the rope length or the mass and measure again." German="Aufgabe 2: Zusammenhang zwischen Seillänge/Masse und Frequenz
+Stelle dazu das Pendel auf beliebige Länge und Masse. Miss die Zeit und die Frequenz. Verändere dann die Seillänge oder die Masse und miss nochmal." French="" Spain="" Italian="" />
+    <Translation Key="P3 FinalQuestLength" English="How is the rope length connected to the frequency? The longer the rope, the..." German="Wie wirkt sich die Länge des Seils auf die Frequenz aus? Je länger das Seil, desto..." French="" Spain="" Italian="" />
+    <Translation Key="P3 FinalQuestWeight" English="How is the mass connected to the frequency? The higher the mass, the..." German="Wie wirkt sich die Masse auf die Frequenz aus? Je höher die Masse, desto..." French="" Spain="" Italian="" />
+    <Translation Key="P3 HigherFrequ" English="higher the frequency" German="höher die Frequenz" French="" Spain="" Italian="" />
+    <Translation Key="P3 LowerFrequ" English="lower the frequency" German="niedriger die Frequenz" French="" Spain="" Italian="" />
+    <Translation Key="No Correlation" English="No Correlation" German="hat keine Auswirkung" French="" Spain="" Italian="" />
+    <Translation Key="Send" English="Send" German="Senden" French="" Spain="" Italian="" />
+    <Translation Key="P3 CorrAnswWeight" English="Great! The mass doesn't have any correlation to the frequency." German="Sehr gut! Das ist korrekt! Die Masse hat keine Auswirkung auf die Frequenz." French="" Spain="" Italian="" />
+    <Translation Key="P3 FalseAnsw" English="I'm sorry, thats not correct. Please read the questions carefully. You may do more measurements and replace your values above." German="Das ist leider nicht ganz korrekt. Lies dir die Antworten genau durch. Du kannst auch noch mehr Messungen machen und die Werte oben ersetzen." French="" Spain="" Italian="" />
+    <Translation Key="P3 CorrAnswLength" English="Nice one! The rope length dictates the frquency: the longer the rope, the lower the frequency." German="Sehr gut! Das ist korrekt! Die Seillänge bestimmt die Frequenz - je länger das Seil, desto langsamer das Pendel." French="" Spain="" Italian="" />
+  
   </Translations>
 </LanguageManager>

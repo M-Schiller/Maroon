@@ -71,10 +71,16 @@ public class GuiPendulum : MonoBehaviour {
         InfoText.gameObject.transform.parent.gameObject.SetActive(false);
     }
 
-    private void customText(string text, Color color )
+    private void customText(string text, Color color)
     {
         InfoText.gameObject.transform.parent.gameObject.SetActive(true);
-        InfoText.text = text;
+
+        //InfoText.text = text;
+        //Multilang:
+        InfoText.text = text.Contains(";") ?
+            text.Split(';').Aggregate((prev, curr) => GamificationManager.instance.l_manager.GetString(prev.Trim()) + " " + GamificationManager.instance.l_manager.GetString(curr.Trim())) :
+            GamificationManager.instance.l_manager.GetString(text);
+
         InfoText.color = color;
     }
 
@@ -83,11 +89,10 @@ public class GuiPendulum : MonoBehaviour {
         if (feedback.Length == 0)
             return;
         
+        
         foreach (var fb in feedback)
         {
-            Debug.Log(fb);
-            Debug.Log(fb.Text);
-            if(fb.Type == FeedbackType.Technical)
+            if (fb.Type == FeedbackType.Technical)
             {
                 if (fb.Text.ToLower() == "clear")
                 {
@@ -103,9 +108,13 @@ public class GuiPendulum : MonoBehaviour {
             } else 
                 if(fb.IsQuestion)
                 {
+                    string text = fb.Text.Contains(";") ?
+                    fb.Text.Split(';').Aggregate((prev, curr) => GamificationManager.instance.l_manager.GetString(prev.Trim()) + " " + GamificationManager.instance.l_manager.GetString(curr.Trim())) :
+                    GamificationManager.instance.l_manager.GetString(fb.Text);
+
                     var args = new TaskEntryManager.AddElementArguments() {
                         Inputs = fb.Inputs,
-                        Text = fb.Text,
+                        Text = text,
                         SendHandler = ButtonSendPressed,
                     };
                 
