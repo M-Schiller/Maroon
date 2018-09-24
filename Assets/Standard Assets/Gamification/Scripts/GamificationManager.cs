@@ -318,9 +318,6 @@ public class GamificationManager : MonoBehaviour
             pickupPositions.Add(pickup.transform.position);
         }
 
-
-
-
     }
 
 
