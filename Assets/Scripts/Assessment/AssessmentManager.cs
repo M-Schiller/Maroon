@@ -15,11 +15,18 @@ public class AssessmentManager : MonoBehaviour {
     [SerializeField]
     private string FirstSectionName;
 
+    [TextArea]
+    public string GlobalAttributes;
+    private AssessmentWatchValue GlobalWatchValue;
 
     private static AssessmentManager instance_;
     private EvaluationService evalService_;
     private List<IAssessmentValue> values_;
     public bool Enabled { get; private set; }
+
+    public delegate void OnEnteredSectionHandler(IterationResult result);
+    public static event OnEnteredSectionHandler OnEnteredSection;
+
     public static AssessmentManager Instance {
         get {
             return instance_;
@@ -31,6 +38,15 @@ public class AssessmentManager : MonoBehaviour {
 
         values_ = new List<IAssessmentValue>();
         instance_ = this;
+
+        if (GlobalAttributes != "")
+        {
+            GlobalWatchValue = gameObject.AddComponent<AssessmentWatchValue>();
+            GlobalWatchValue.Attributes = GlobalAttributes;
+            GlobalWatchValue.Internal = true;
+        }
+
+
         try
         {
             Debug.Log("Connecting to WebService");
@@ -51,12 +67,17 @@ public class AssessmentManager : MonoBehaviour {
             );
 
             IterationResult result = Send(ev);
-            GuiPendulum.ShowFeedback(result.Feedback);
+
+            if (OnEnteredSection != null)
+                OnEnteredSection(result);
+
         } catch(Exception e)
         {
             Enabled = false;
             Debug.Log("WARNING! An error happened while connection to the Assessment service: " + e.Message);
+            return;
         }
+
 
     }
 

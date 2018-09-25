@@ -49,7 +49,21 @@ public class PendulumManager : MonoBehaviour
     [SerializeField]
     private float RopeMaxLength = 0.5f;
 
-    
+
+    public void Awake()
+    {
+        Calculator.OnButtonPressed += CalculatorButtonPressed;
+        StopWatch.OnStart += StopWatchStart;
+        StopWatch.OnStop += StopWatchStop;
+        AssessmentManager.OnEnteredSection += (result) => {
+            GuiPendulum.ShowFeedback(result.Feedback);
+        };
+
+        AssessmentWatchValue.OnValueRegistered += (result) => {
+            GuiPendulum.ShowFeedback(result.Feedback);
+        };
+    }
+
     /// <summary>
     /// Initialization
     /// </summary>
@@ -61,9 +75,7 @@ public class PendulumManager : MonoBehaviour
         //This is for initialy setting the ropelength in assessment 
         setRopeLengthRelative(0);
 
-        Calculator.OnButtonPressed += CalculatorButtonPressed;
-        StopWatch.OnStart += StopWatchStart;
-        StopWatch.OnStop += StopWatchStop;
+
     }
 
     public void Update()
@@ -336,14 +348,13 @@ public class PendulumManager : MonoBehaviour
         */
         GuiPendulum.ShowFeedback(
             AssessmentManager.Instance.Send(
-                GameEventBuilder.UseObject("operation", "ropelength_change").Add(
-                    GameEventBuilder.EnvironmentVariable(name, "Physics.gravity.magnitude", Physics.gravity.magnitude)
-                )
+                GameEventBuilder.UseObject("operation", "ropelength_change")
             ).Feedback
         );
+        
     }
 
-
+    
 
     void DrawLine(Vector3 start, Vector3 end, Color color)
     {

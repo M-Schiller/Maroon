@@ -10,12 +10,19 @@ public class AssessmentWatchValue : IAssessmentValue {
 
     //public bool ContinousUpdate = false;
     [TextArea]
-    public string Attributes;
+    public string Attributes = "";
+
+    [HideInInspector]
+    public bool Internal = false;
 
     private List<Property> properties = new List<Property>();
 
+
+    public delegate void OnValueRegisteredHandler(IterationResult result);
+    public static event OnValueRegisteredHandler OnValueRegistered;
+
     // Use this for initialization
-	void Start () {
+    void Start() {
         
         foreach(string line in Attributes.Split('\n'))
         {
@@ -26,9 +33,12 @@ public class AssessmentWatchValue : IAssessmentValue {
             Property prop = new Property(line);
             string[] parts = line.Split('.');
             string ComponentName = parts[0];
-            if ((prop.RootComponent = GetComponent(ComponentName)) == null)
-                throw new Exception(String.Format("The component '{0}' was not found on the object '{1}'", ComponentName, name));
-            
+            if (!Internal && (prop.RootComponent = GetComponent(ComponentName)) == null )
+                throw new Exception(String.Format("The component '{0}' was not found on the object '{1}'. Use the Assessment Manager to watch global variables.", ComponentName, name));
+            else if (Internal && (prop.StaticObject = GetGlobalTypeByName(ComponentName)) == null) {
+                throw new Exception(String.Format("The Object '{0}' was not found in the global context.", ComponentName, name));
+            }
+
             parts = parts.Skip(1).ToArray();
             foreach (string part in parts)
             {
@@ -46,11 +56,12 @@ public class AssessmentWatchValue : IAssessmentValue {
             else
                 properties.Add(prop);
         }
-        
-        GuiPendulum.ShowFeedback(AssessmentManager.Instance.RegisterValue(this).Feedback);
+
+        if (OnValueRegistered != null)
+            OnValueRegistered(AssessmentManager.Instance.RegisterValue(this));
     }
 	
-    private ParentProp GetMember(string name, Type ParentType)
+    public static ParentProp GetMember(string name, Type ParentType)
     {
         ParentProp ret = null;
         foreach (PropertyInfo pi in ParentType.GetProperties())
@@ -76,6 +87,22 @@ public class AssessmentWatchValue : IAssessmentValue {
             }
 
         return ret;
+    }
+
+    public static Type GetGlobalTypeByName(string name)
+    {
+        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            foreach (Type t in a.GetTypes())
+            {
+                if (t.Name == name)
+                    return t;
+            }
+        }
+
+        
+
+        return Type.GetType(name);
     }
 
 	// Update is called once per frame
@@ -108,7 +135,8 @@ public class AssessmentWatchValue : IAssessmentValue {
     public class Property
     {
         public string FullName;
-        public Component RootComponent;
+        public Component RootComponent = null;
+        public Type StaticObject = null;
         public List<ParentProp> ParentLine;
         private object lastVal;
         private object currentVal;
@@ -139,8 +167,10 @@ public class AssessmentWatchValue : IAssessmentValue {
         {
             if (ParentLine.Count > 0)
                 return ParentLine[ParentLine.Count - 1].PropertyType;
-            else if (RootComponent)
+            else if (RootComponent != null)
                 return RootComponent.GetType();
+            else if (StaticObject != null)
+                return StaticObject;
             else
                 return null;
         }
@@ -151,7 +181,6 @@ public class AssessmentWatchValue : IAssessmentValue {
             }
         }
        
-
         public bool IsDirty {
             get {
                 return dirty;
@@ -203,7 +232,6 @@ public class AssessmentWatchValue : IAssessmentValue {
             return type;
         }
         
-
         public object GetValue(object obj, object[] index)
         {
             //Debug.Log(String.Format("getValue: {0}, {1}", obj, type));
