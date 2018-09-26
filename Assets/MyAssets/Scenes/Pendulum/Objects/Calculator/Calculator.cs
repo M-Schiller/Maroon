@@ -79,6 +79,7 @@ public class Calculator : MonoBehaviour {
             reduce();
 
             clear = true;
+            displayNumber();
             return true;
         }));
         btnEnter.keycodes.Add(KeyCode.Return);
