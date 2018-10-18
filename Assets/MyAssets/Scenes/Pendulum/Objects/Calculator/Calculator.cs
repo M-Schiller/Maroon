@@ -27,6 +27,8 @@ public class Calculator : MonoBehaviour {
     public delegate void ButtonPressed(CalculatorButtonPressedEvent ev);
     public static event ButtonPressed OnButtonPressed;
 
+    public Boolean HasFocus { get; private set; }
+
     private static int visibleDigits = 15;
 
     private Dictionary<string, Button> buttons = new Dictionary<string, Button>();
@@ -44,6 +46,8 @@ public class Calculator : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+
+        HasFocus = false;
 
         //numberButtons
         var start = (int)KeyCode.Keypad0;
@@ -221,15 +225,20 @@ public class Calculator : MonoBehaviour {
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        
+
         if (Physics.Raycast(ray, out hit, 100))
         {
             if (buttons.ContainsKey(hit.transform.name))
             {
+                HasFocus = true;
                 btn = buttons[hit.transform.name];
                 return true;
-            }   
-        }
+            } else if (hit.transform.parent != null && hit.transform.parent.name == this.name)
+                HasFocus = true;
+            else
+                HasFocus = false;
+        } else
+            HasFocus = false;
 
         return false;
     }
@@ -237,7 +246,11 @@ public class Calculator : MonoBehaviour {
     protected bool getButtonFromKeyboard(out Button btn)
     {
         btn = null;
-        foreach(Button button in buttons.Values)
+
+        if (!HasFocus)
+            return false;
+
+        foreach (Button button in buttons.Values)
         {
             foreach(KeyCode code in button.keycodes)
                 if (Input.GetKeyDown(code))

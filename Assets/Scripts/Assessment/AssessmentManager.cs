@@ -92,7 +92,7 @@ public class AssessmentManager : MonoBehaviour {
     private GameEvent GetAllEnvironmentalChanges()
     {
         if (values_.Count > 0)
-            return values_.Where(val => !val.ContinousUpdate).Select(val => val.GameEvent).Aggregate((prev, curr) => prev.Add(curr));
+            return values_.Where(val => !val.ContinuousUpdate).Select(val => val.GameEvent).Aggregate((prev, curr) => prev.Add(curr));
         else
             return new GameEvent();
     }
@@ -132,7 +132,7 @@ public class AssessmentManager : MonoBehaviour {
             return;
 
         var evt = values_
-            .Where(val => val.ContinousUpdate)
+            .Where(val => val.ContinuousUpdate)
             .Select(val => val.GameEvent)
             .Aggregate(new GameEvent(), (prev, curr) => prev.Add(curr));
 

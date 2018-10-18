@@ -79,7 +79,7 @@
     <Translation Key="Wrong Generator" English="Here you need to place something to provide power to the experiment." German="Hier gehört etwas hin das das Experiment mit Strom versorgt." French="" Spain="" Italian="" />
 
 
-    <Translation Key="P1 Welcome" English="Welcome at the Pendulum Experiment. Get used to the experiemt: deflect the pendulum with drag and drop." German="Willkommen beim Pendel-Experiment. Mach dich vertraut. Lenke das Pendel mittels Drag and Drop aus." French="" Spain="" Italian="" />
+    <Translation Key="P1 Welcome" English="Welcome at the Pendulum Experiment. Get used to the experiment: deflect the pendulum with drag and drop." German="Willkommen beim Pendel-Experiment. Mach dich vertraut. Lenke das Pendel mittels Drag and Drop aus." French="" Spain="" Italian="" />
     <Translation Key="P1 Ropelength" English="Well done! Now use the Mouse wheel to adjust the rope length." German="Sehr gut! Jetzt verwende das Mausrad, um die Seillänge zu verändern" French="" Spain="" Italian="" />
     <Translation Key="P1 Weight" English="Nice! Now use 'A' and 'D' on your keyboard to adjust the mass" German="Super! Jetzt verändere die Masse mit den Tasten 'A' und 'D'" French="" Spain="" Italian="" />
     <Translation Key="P1 Stopwatch Start" English="Perfect! Now start the stop watch by clicking on it." German="Perfekt! Jetzt zur Stoppuhr: Klicke darauf um sie zu starten." French="" Spain="" Italian="" />

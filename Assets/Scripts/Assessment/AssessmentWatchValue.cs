@@ -108,7 +108,7 @@ public class AssessmentWatchValue : IAssessmentValue {
 	// Update is called once per frame
 	void Update () {
 
-        if (!ContinousUpdate)
+        if (!ContinuousUpdate)
             foreach (Property prop in properties)
                 prop.Update();
         else 

@@ -29,8 +29,8 @@ public class TaskEntryManager : MonoBehaviour {
     private float visibleY;
 
     private static Color SuccessColor = new Color(0, 0.6f, 0);
-    private static Color HintColor = new Color(1, 1, 0);
-    private static Color MistakeColor = new Color(1, 0, 0);
+    private static Color HintColor = new Color(0, 0, 0);
+    private static Color MistakeColor = new Color(1, 1, 0);
 
 
 

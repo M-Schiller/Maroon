@@ -7,6 +7,6 @@ using UnityEngine;
 
 public abstract class IAssessmentValue : MonoBehaviour
 {
-    public bool ContinousUpdate = false;
+    public bool ContinuousUpdate = false;
     public abstract GameEvent GameEvent {  get; set; }
 }
