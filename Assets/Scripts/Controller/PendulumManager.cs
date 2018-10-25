@@ -74,8 +74,7 @@ public class PendulumManager : MonoBehaviour
 
         //This is for initialy setting the ropelength in assessment 
         setRopeLengthRelative(0);
-
-
+        
     }
 
     public void Update()

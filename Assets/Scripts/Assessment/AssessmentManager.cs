@@ -67,7 +67,7 @@ public class AssessmentManager : MonoBehaviour {
             );
 
             IterationResult result = Send(ev);
-
+            
             if (OnEnteredSection != null)
                 OnEnteredSection(result);
 
